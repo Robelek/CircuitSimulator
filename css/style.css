@@ -1,0 +1,91 @@
+:root
+{
+    --primary: rgb(20, 20, 20);
+    --secondary: rgb(255, 157, 0);
+}
+
+
+*
+{
+    color:whitesmoke;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#header
+{
+    text-align: center;
+}
+
+body
+{
+    background-color: black;
+}
+
+#canvas
+{
+    background-color: black;
+    border: 1px solid whitesmoke;
+    margin: 0 auto;
+    display: block;
+}
+
+.sidebar
+{
+    position:fixed;
+    top:0;
+    left:0;
+    width:20rem;
+    height:100%;
+    background-color: var(--primary);
+    transition: 0.5s;
+
+}
+
+.sidebar > h2
+{
+    padding: 0.1rem;
+    text-align: center;
+    margin-right:4rem;
+}
+
+.arrow
+{
+    padding:0.1rem;
+    shape-rendering: geometricPrecision;
+    position: absolute;
+    right:0;
+    display: flex;
+    justify-content: flex-end;
+    width: fit-content;
+    margin-left:auto;
+    transition: 0.5s;
+}
+
+.arrow.hidden 
+{
+    transform: scaleX(-1);
+    transition: 0.5s;
+}
+
+.sidebar.hidden
+{
+    left: calc(-20rem + 4rem);
+    transition: 0.5s;
+    overflow:hidden;
+}
+
+.sidebar > .colorBar
+{
+    position: absolute;
+    top:0;
+    right:0;
+    height:100%;
+    width:4rem;
+    background-color:   var(--secondary);
+}
+
+.componentList
+{
+    width:calc(100%-4rem);
+    height:100%;
+}

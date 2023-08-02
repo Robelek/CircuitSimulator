@@ -1,0 +1,35 @@
+<html>
+    <head>
+        <title>Circuit Simulator</title>
+        <link rel="stylesheet" type="text/css" href="css/style.css"> </link>
+        <script src="js/index.js" type="module"> </script>
+    </head>
+    <body>
+        <div id="header">
+            <h1>Circuit Simulator</h1>
+        </div>
+        
+        <canvas id="canvas" width="800" height="600">
+
+        </canvas>
+
+        <div class="sidebar">
+            <h2> Components </h2>
+            <div class="colorBar"> </div>
+            <div class="arrow" onclick="toggleSidebar()">
+                <svg height="100" width="60">
+                    <line x1="5" y1="20" x2="50" y2="20" style="stroke:rgb(255,255,255);stroke-width:5" />
+                    <line x1="6" y1="20" x2="25" y2="35" style="stroke:rgb(255,255,255);stroke-width:5" />
+                    <line x1="6" y1="20" x2="25" y2="5" style="stroke:rgb(255,255,255);stroke-width:5" />
+                </svg>
+            </div>
+
+            <div class="componentList">
+                
+            </div>
+           
+
+        </div>
+
+    </body>
+</html>
