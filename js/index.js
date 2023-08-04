@@ -1,10 +1,20 @@
-import AND from "./components/AND.js";
-import INPUT from "./components/INPUT.js";
+import AND from "./components/basic/AND.js";
+import INPUT from "./components/basic/INPUT.js";
+import LED from "./components/basic/LED.js";
+import NOT from "./components/basic/NOT.js";
+import OR from "./components/basic/OR.js";
+import NOR from "./components/basic/NOR.js";
+import NAND from "./components/basic/NAND.js";
+import BUFFER from "./components/basic/BUFFER.js";
 
 let componentTemplates = [
     new INPUT(),
     new AND(),
-
+    new LED(),
+    new NOT(),
+    new OR(),
+    new NOR(),
+    new NAND(),
 ];
 
 let components = [];
@@ -101,6 +111,63 @@ function drawComponents()
 
 }
 
+function handleEvents()
+{
+    let previousEvents = events;
+    events = [];
+
+    for(let i=0;i<previousEvents.length;i++)
+    {
+        console.log(previousEvents[i].type);
+        if(previousEvents[i].type == "connected")
+        {
+            let component = previousEvents[i].component;
+
+            for(let j=0;j<component.inputs.length;j++)
+            {
+                if(component.inputComponents[j] === null)
+                {
+                    continue;
+                }
+                
+                let outputID = component.inputComponents[j].outputID;
+                let value =  component.inputComponents[j].component.outputs[outputID];
+
+                component.inputs[j] = value;
+            }
+
+            component.updateOutputs();
+            events.push({type: "valueChanged", component: component});
+        }
+        else if(previousEvents[i].type == "valueChanged")
+        {
+
+            let component = previousEvents[i].component;
+
+            component.updateOutputs();
+
+            for(let j=0;j<component.outputs.length;j++)
+            {
+                if(component.outputComponents[j] === null)
+                {
+                    continue;
+                }
+                let inputID = component.outputComponents[j].inputID;
+
+                let value =  component.outputs[j];
+
+                component.outputComponents[j].component.inputs[inputID] = value;
+
+                events.push({type: "valueChanged", component: component.outputComponents[j].component});
+            }
+
+          
+        }
+        
+        
+    }
+
+}
 
 window.onload = function()
 {
@@ -152,6 +219,7 @@ window.onload = function()
     {
         context.clearRect(0, 0, canvas.width, canvas.height);
         drawComponents();
+        handleEvents();
     } 
     , 1000/60);
 }
@@ -177,6 +245,15 @@ canvas.addEventListener('mousedown', function(e)
     if(e.shiftKey)
     {
        console.log({x: e.offsetX, y: e.offsetY});
+
+       for(let i=0;i<components.length;i++)
+       {
+              if(components[i].isPointInComponent(point))
+              {
+                console.log(components[i]);
+              }
+       }
+
        return;
     }
 
@@ -204,8 +281,13 @@ canvas.addEventListener('mousedown', function(e)
             {
                 if(components[i].isPointInComponent(point))
                 {
-                    if(components[i].handleRightClick())
+                    let result = components[i].handleRightClick();
+                    if(result)
                     {
+                        if(result == "valueChanged")
+                        {
+                            events.push({type: "valueChanged", component: components[i]});
+                        }
                         return;
                     }
                 }
@@ -251,7 +333,8 @@ canvas.addEventListener('mousedown', function(e)
                 let inWhichInput = components[i].inWhichInputIsPoint(point);
               
                 components[i].connectToInput(selectedComponent, outputID, inWhichInput, events);
-    
+
+                selectedComponent.outputComponents[outputID] = {component:components[i], inputID: inWhichInput};
                 
 
                 console.log()
@@ -263,6 +346,15 @@ canvas.addEventListener('mousedown', function(e)
     
                 console.log(connectionLines);
     
+
+                //connection!
+                events.push(
+                    {
+                        type: "connected",
+                        component: components[i],
+                    });
+
+
                 selectedComponent = null;
                 currentLinePositions = [];
                 currentMouseMode = "none";
@@ -299,6 +391,52 @@ canvas.addEventListener('mousemove', function(e)
             selectedComponent.position = {x: e.offsetX - selectedComponentOffset.x, y: e.offsetY - selectedComponentOffset.y};
         }
         
+    }
+});
+
+window.addEventListener('keydown', function(event) {
+    let key = event.key;
+    if(key == "Delete")
+    {
+        console.log("delete");
+
+        let componentDeleted = null;
+        for(let i=0;i<components.length;i++)
+        {
+            if(components[i].isPointInComponent(mousePosition))
+            {
+                componentDeleted = components[i];
+                components[i].deleteComponent();
+                components.splice(i, 1);
+                break;
+            }
+        }
+
+        for(let i=0;i<connectionLines.length;i++)
+        {
+            //console.log(connectionLines[i]);
+            if(connectionLines[i].inputComponent == componentDeleted || connectionLines[i].outputComponent == componentDeleted)
+            {
+                if(connectionLines[i].inputComponent == componentDeleted)
+                {
+                    events.push({type: "valueChanged", component: connectionLines[i].outputComponent});
+                }
+                else
+                {
+                    events.push({type: "valueChanged", component: connectionLines[i].inputComponent});
+                }
+
+                connectionLines.splice(i, 1);
+                if(i>0)
+                {
+                    i--;
+                }
+
+               
+
+            }
+        }
+
     }
 });
 

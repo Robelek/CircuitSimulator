@@ -1,6 +1,6 @@
 class Component 
 {
-    constructor(name, inputs, outputs, width = 40, color = "rgba(255, 0, 0, 255)")
+    constructor(name, inputs, outputs, width = 60, color = "rgba(255, 0, 0, 255)")
     {
         this.name = name;
 
@@ -44,7 +44,7 @@ class Component
         {
             context.fillStyle = "rgba(50, 50, 50, 255)";
             context.beginPath();
-            context.arc(this.position.x, this.position.y + i*20 + 10, 8, 0, 2 * Math.PI);
+            context.arc(this.position.x + 4, this.position.y + i*20 + 10, 8, 0, 2 * Math.PI);
             context.fill();
         }
 
@@ -52,7 +52,7 @@ class Component
         {
             context.fillStyle = "rgba(50, 50, 50, 255)";
             context.beginPath();
-            context.arc(this.position.x + this.size.x, this.position.y + i*20 + 10, 8, 0, 2 * Math.PI);
+            context.arc(this.position.x -4 + this.size.x, this.position.y + i*20 + 10, 8, 0, 2 * Math.PI);
             context.fill();
         }
 
@@ -89,7 +89,7 @@ class Component
         {
             //center x, center y, radius, start angle, end angle
             //context.arc(this.position.x, this.position.y + i*20 + 10, 8, 0, 2 * Math.PI);
-            
+
             let firstExpression = point.x - (this.position.x + offsetX);
             firstExpression *= firstExpression;
 
@@ -127,6 +127,47 @@ class Component
     handleRightClick()
     {
         return false;
+    }
+
+    updateOutputs()
+    {
+
+    }
+
+    deleteComponent()
+    {
+        for(let i=0;i<this.inputComponents.length;i++)
+        {
+            if(this.inputComponents[i] != null)
+            {
+                let thatComponent = this.inputComponents[i].component;
+                let thatOutputID = this.inputComponents[i].outputID;
+
+                thatComponent.disconnectOutput(thatOutputID);
+            }
+        }
+
+        for(let i=0;i<this.outputComponents.length;i++)
+        {
+            if(this.outputComponents[i] != null)
+            {
+                let thatComponent = this.outputComponents[i].component;
+                let thatInputID = this.outputComponents[i].inputID;
+
+                thatComponent.disconnectInput(thatInputID);
+            }
+        }
+    }
+
+    disconnectInput(inputID)
+    {
+        this.inputComponents[inputID] = null;
+        this.inputs[inputID] = 0;
+    }
+    disconnectOutput(outputID)
+    {
+        this.outputComponents[outputID] = null;
+        this.outputs[outputID] = 0;
     }
 }
 

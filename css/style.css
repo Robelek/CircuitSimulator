@@ -88,10 +88,11 @@ body
 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: auto 1fr;
+    grid-auto-rows: 4rem;
     row-gap: 1rem;
     width: calc(20rem - 4rem);
     height:100%;
+    
 }
 
 .componentList > *
