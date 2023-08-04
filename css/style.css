@@ -86,6 +86,18 @@ body
 
 .componentList
 {
-    width:calc(100%-4rem);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: auto 1fr;
+    row-gap: 1rem;
+    width: calc(20rem - 4rem);
     height:100%;
+}
+
+.componentList > *
+{
+    border: 0.1rem solid whitesmoke;
+    width: 4rem;
+    height: 4rem;
+    cursor:grab;
 }

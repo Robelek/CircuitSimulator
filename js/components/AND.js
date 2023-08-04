@@ -4,8 +4,9 @@ class AND extends Component
 {
     constructor()
     {
-        super("AND", 2, 1);
+        super("AND", [0,0], [0]);
     }
+
 }
 
 export default AND;
