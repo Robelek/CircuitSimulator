@@ -6,6 +6,9 @@ import OR from "./components/basic/OR.js";
 import NOR from "./components/basic/NOR.js";
 import NAND from "./components/basic/NAND.js";
 import BUFFER from "./components/basic/BUFFER.js";
+import CLOCK from "./components/basic/CLOCK.js";
+
+let events = [];
 
 let componentTemplates = [
     new INPUT(),
@@ -15,6 +18,8 @@ let componentTemplates = [
     new OR(),
     new NOR(),
     new NAND(),
+    new BUFFER(),
+    new CLOCK(events),
 ];
 
 let components = [];
@@ -31,7 +36,7 @@ let currentMouseMode = "none";
 
 let mousePosition = {x:0, y:0};
 
-let events = [];
+
 
 let connectionLines = [];
 
@@ -148,17 +153,23 @@ function handleEvents()
 
             for(let j=0;j<component.outputs.length;j++)
             {
-                if(component.outputComponents[j] === null)
+                if(component.outputComponents[j] === null || component.outputComponents[j] === []) 
                 {
                     continue;
                 }
-                let inputID = component.outputComponents[j].inputID;
 
-                let value =  component.outputs[j];
+                for(let k=0;k<component.outputComponents[j].length;k++)
+                {
+                    let inputID = component.outputComponents[j][k].inputID;
 
-                component.outputComponents[j].component.inputs[inputID] = value;
-
-                events.push({type: "valueChanged", component: component.outputComponents[j].component});
+                    let value =  component.outputs[j];
+    
+                    component.outputComponents[j][k].component.inputs[inputID] = value;
+    
+                    events.push({type: "valueChanged", component: component.outputComponents[j][k].component});
+                }
+                
+               
             }
 
           
@@ -203,6 +214,14 @@ window.onload = function()
         //console.log(e);
         let currentlyDragged = document.getElementsByClassName("dragged")[0];
         let newObject = eval("new " + componentTemplates[currentlyDragged.id].name + "()");
+
+        if(newObject instanceof CLOCK)
+        {
+            newObject.addEvent = () =>
+            {
+                events.push({type: "valueChanged", component: newObject});
+            }
+        }
 
         newObject.position = {x: e.offsetX, y: e.offsetY};
 
@@ -334,7 +353,8 @@ canvas.addEventListener('mousedown', function(e)
               
                 components[i].connectToInput(selectedComponent, outputID, inWhichInput, events);
 
-                selectedComponent.outputComponents[outputID] = {component:components[i], inputID: inWhichInput};
+
+                selectedComponent.outputComponents[outputID].push({component:components[i], inputID: inWhichInput});
                 
 
                 console.log()

@@ -17,7 +17,7 @@ class Component
 
         for(let i=0;i<outputs.length;i++)
         {
-            this.outputComponents.push(null);
+            this.outputComponents.push([]);
         }
 
         let biggest = this.inputs.length > this.outputs.length ? this.inputs.length : this.outputs.length;
@@ -143,19 +143,23 @@ class Component
                 let thatComponent = this.inputComponents[i].component;
                 let thatOutputID = this.inputComponents[i].outputID;
 
-                thatComponent.disconnectOutput(thatOutputID);
+                thatComponent.disconnectOutput(this, thatOutputID);
             }
         }
 
         for(let i=0;i<this.outputComponents.length;i++)
         {
-            if(this.outputComponents[i] != null)
+            for(let j=0;j<this.outputComponents[i].length;j++)
             {
-                let thatComponent = this.outputComponents[i].component;
-                let thatInputID = this.outputComponents[i].inputID;
-
-                thatComponent.disconnectInput(thatInputID);
+                if(this.outputComponents[i][j] != null)
+                {
+                    let thatComponent = this.outputComponents[i][j].component;
+                    let thatInputID = this.outputComponents[i][j].inputID;
+    
+                    thatComponent.disconnectInput(thatInputID);
+                }
             }
+           
         }
     }
 
@@ -164,10 +168,16 @@ class Component
         this.inputComponents[inputID] = null;
         this.inputs[inputID] = 0;
     }
-    disconnectOutput(outputID)
+    disconnectOutput(component, outputID)
     {
-        this.outputComponents[outputID] = null;
-        this.outputs[outputID] = 0;
+        for(let i=0;i<this.outputComponents[outputID].length;i++)
+        {
+            if(this.outputComponents[outputID][i].component == component)
+            {
+                this.outputComponents[outputID].splice(i, 1);
+                break;
+            }
+        }
     }
 }
 
