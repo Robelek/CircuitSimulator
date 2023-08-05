@@ -8,6 +8,7 @@ import NAND from "./components/basic/NAND.js";
 import BUFFER from "./components/basic/BUFFER.js";
 import CLOCK from "./components/basic/CLOCK.js";
 import ANDx3 from "./components/basic/ANDx3.js";
+import XOR from "./components/basic/XOR.js";
 
 let events = [];
 
@@ -22,6 +23,7 @@ let componentTemplates = [
     new NAND(),
     new BUFFER(),
     new CLOCK(events),
+    new XOR(),
 ];
 
 let components = [];
@@ -526,6 +528,13 @@ async function saveCircuit() {
   }
 
 async function loadCircuit() {
+    components = [];
+    connectionLines = []
+    selectedComponent = [];
+    currentLinePositions = [];
+    currentMouseMode = "none";
+
+
     const [fileHandle] = await window.showOpenFilePicker(filePickerOptions);
     const file = await fileHandle.getFile();
     const contents = await file.text();
