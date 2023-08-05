@@ -179,6 +179,50 @@ class Component
             }
         }
     }
+
+    getDataToSave(components)
+    {
+        let result = "";
+
+        result += `${this.position.x} ${this.position.y}`;
+        result += " inputs:";
+        for(let j=0; j<this.inputs.length;j++)
+        {
+            result += ` ${this.inputs[j] + 0}`;
+        }
+
+        result += " outputs:";
+        for(let j=0; j<this.outputs.length;j++)
+        {
+            result += ` ${this.outputs[j] + 0}`;
+        }
+
+        // result += " inputComponentIDs:";
+        // for(let j=0; j<this.inputs.length;j++)
+        // {
+        //     if(this.inputComponents[j] == null)
+        //     {
+        //         result += ` -1`;
+        //     }
+        //     else
+        //     {
+        //         result += ` ${components.indexOf(this.inputComponents[j].component)}`;
+        //     }
+        // }
+
+        // result += " outputComponentIDs:";
+        // for(let j=0; j<this.outputs.length;j++)
+        // {
+        //     result += ` ${this.outputComponents[j].length}:`;
+        //     for(let k=0;k<this.outputComponents[j].length;k++)
+        //     {
+        //         result += ` ${components.indexOf(this.outputComponents[j][k].component)}`;
+        //     }
+        // }
+
+        return result;
+
+    }
 }
 
 export default Component;

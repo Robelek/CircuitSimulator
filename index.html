@@ -9,10 +9,22 @@
             <h1>Circuit Simulator</h1>
         </div>
         
-        <canvas id="canvas" width="800" height="600">
+        <main>
+            <canvas id="canvas" width="800" height="600">
 
-        </canvas>
+            </canvas>
 
+            
+            <div class="buttonHolder">
+                <div class="button" onclick="saveCircuit()">
+                    save circuit
+                </div>
+                <div class="button" onclick="loadCircuit()">
+                    load circuit
+                </div>
+            </div>
+        </main>
+        
         <div class="sidebar">
             <h2> Components </h2>
             <div class="colorBar"> </div>
@@ -31,5 +43,6 @@
 
         </div>
 
+        
     </body>
 </html>

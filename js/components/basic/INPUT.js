@@ -37,6 +37,7 @@ class INPUT extends Component
         this.outputs[0] = !this.outputs[0] + 0;
         return "valueChanged";
     }
+
 }
 
 export default INPUT;
