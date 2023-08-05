@@ -12,13 +12,13 @@ class LED extends Component
     }
 
    
-    draw(context)
+    draw(context, cameraPosition)
     {
      
 
         context.fillStyle = "rgba(200,200,200,255)";
         context.beginPath();
-        context.arc(this.position.x + this.size.x/2, this.position.y + this.size.y /2, this.radius+2, 0, 2 * Math.PI);
+        context.arc(this.position.x - cameraPosition.x + this.size.x/2, this.position.y - cameraPosition.y + this.size.y /2, this.radius+2, 0, 2 * Math.PI);
         context.fill();
 
         if(this.inputs[0] == 1)
@@ -31,14 +31,14 @@ class LED extends Component
         }
        
         context.beginPath();
-        context.arc(this.position.x + this.size.x/2, this.position.y + this.size.y /2, this.radius, 0, 2 * Math.PI);
+        context.arc(this.position.x  - cameraPosition.x + this.size.x/2, this.position.y -cameraPosition.y + this.size.y /2, this.radius, 0, 2 * Math.PI);
         context.fill();
 
         for(let i=0;i<this.inputs.length;i++)
         {
             context.fillStyle = "rgba(50, 50, 50, 255)";
             context.beginPath();
-            context.arc(this.position.x + 4, this.position.y + i*20 + 10, 8, 0, 2 * Math.PI);
+            context.arc(this.position.x - cameraPosition.x + 4, this.position.y -cameraPosition.y + i*20 + 10, 8, 0, 2 * Math.PI);
             context.fill();
         }
 

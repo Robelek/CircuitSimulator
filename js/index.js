@@ -46,6 +46,8 @@ let connectionLines = [];
 
 let currentLinePositions = [];
 
+let cameraPosition = {x: 0, y: 0};
+let scrollAmount = 5;
 
 
 function drawConnectionLine(positionA, positionB)
@@ -53,8 +55,8 @@ function drawConnectionLine(positionA, positionB)
 
         context.strokeStyle = "rgba(255, 255, 255, 255)";
         context.beginPath();
-        context.moveTo(positionA.x, positionA.y);
-        context.lineTo(positionB.x, positionB.y);
+        context.moveTo(positionA.x - cameraPosition.x, positionA.y - cameraPosition.y);
+        context.lineTo(positionB.x - cameraPosition.x, positionB.y - cameraPosition.y);
         context.stroke();
    
 
@@ -67,7 +69,7 @@ function drawComponents()
     {
         let component = components[i];
        // //console.log(component);
-        component.draw(context);
+        component.draw(context, cameraPosition);
        
     }
 
@@ -77,7 +79,7 @@ function drawComponents()
 
         if(thisLinePositions.length > 0)
         {
-            let firstPos = connectionLines[i].outputComponent.getOutputPositionCenter(connectionLines[i].outputID);
+            let firstPos = connectionLines[i].outputComponent.getOutputPositionCenter(connectionLines[i].outputID, cameraPosition);
 
             drawConnectionLine(firstPos, thisLinePositions[0]);
             for(let j=0;j<thisLinePositions.length - 1;j++)
@@ -85,11 +87,13 @@ function drawComponents()
                 drawConnectionLine(thisLinePositions[j], thisLinePositions[j+1]);
             }
 
-            drawConnectionLine(thisLinePositions[thisLinePositions.length - 1], connectionLines[i].inputComponent.getInputPositionCenter(connectionLines[i].inputID));
+            drawConnectionLine(thisLinePositions[thisLinePositions.length - 1], 
+                connectionLines[i].inputComponent.getInputPositionCenter(connectionLines[i].inputID, cameraPosition));
         }
         else
         {
-            drawConnectionLine(connectionLines[i].outputComponent.getOutputPositionCenter(connectionLines[i].outputID), connectionLines[i].inputComponent.getInputPositionCenter(connectionLines[i].inputID));
+            drawConnectionLine(connectionLines[i].outputComponent.getOutputPositionCenter(connectionLines[i].outputID, cameraPosition), 
+            connectionLines[i].inputComponent.getInputPositionCenter(connectionLines[i].inputID, cameraPosition));
         }
       
        
@@ -98,7 +102,7 @@ function drawComponents()
     if(currentMouseMode == "connectOutput" && selectedComponent != null)
     {
 
-            let firstPos = selectedComponent.getOutputPositionCenter(outputID);
+            let firstPos = selectedComponent.getOutputPositionCenter(outputID, cameraPosition);
 
             if(currentLinePositions.length > 0)
             {
@@ -107,11 +111,12 @@ function drawComponents()
                 {
                     drawConnectionLine(currentLinePositions[j], currentLinePositions[j+1]);
                 }
-                drawConnectionLine(currentLinePositions[currentLinePositions.length - 1], mousePosition);
+                drawConnectionLine(currentLinePositions[currentLinePositions.length - 1], 
+                    {x: mousePosition.x - cameraPosition.x, y: mousePosition.y + cameraPosition.y});
             }
             else
             {
-                drawConnectionLine(firstPos, mousePosition);
+                drawConnectionLine(firstPos, {x: mousePosition.x - cameraPosition.x, y: mousePosition.y + cameraPosition.y});
             }
            
 
@@ -227,7 +232,7 @@ window.onload = function()
             }
         }
 
-        newObject.position = {x: e.offsetX, y: e.offsetY};
+        newObject.position = {x: e.offsetX - cameraPosition.x, y: e.offsetY + cameraPosition.y};
 
         components.push(newObject);
     });
@@ -267,11 +272,12 @@ canvas.addEventListener('mousedown', function(e)
 
     if(e.shiftKey)
     {
-       console.log({x: e.offsetX, y: e.offsetY});
+       console.log(`${e.offsetX} ${e.offsetY}, camera position: ${cameraPosition.x} ${cameraPosition.y}`);
+   
 
        for(let i=0;i<components.length;i++)
        {
-              if(components[i].isPointInComponent(point))
+              if(components[i].isPointInComponent(point, cameraPosition))
               {
                 console.log(components[i]);
               }
@@ -302,7 +308,7 @@ canvas.addEventListener('mousedown', function(e)
 
             for(let i=0;i<components.length;i++)
             {
-                if(components[i].isPointInComponent(point))
+                if(components[i].isPointInComponent(point, cameraPosition))
                 {
                     let result = components[i].handleRightClick();
                     if(result)
@@ -323,7 +329,7 @@ canvas.addEventListener('mousedown', function(e)
     for(let i=0;i<components.length;i++)
     {
       
-        let inWhichOutput = components[i].inWhichOutputIsPoint(point);
+        let inWhichOutput = components[i].inWhichOutputIsPoint(point, cameraPosition);
 
         if(inWhichOutput != -1 && currentMouseMode == "none")
         {
@@ -335,13 +341,13 @@ canvas.addEventListener('mousedown', function(e)
             return;
         }
 
-        if(components[i].isPointInComponent(point))
+        if(components[i].isPointInComponent(point, cameraPosition))
         {
             if(currentMouseMode == "none" && selectedComponent == null)
             {
                 currentLinePositions = [];
                 selectedComponent = components[i];
-                selectedComponentOffset = {x: e.offsetX - components[i].position.x, y: e.offsetY - components[i].position.y};
+                selectedComponentOffset = {x: e.offsetX + cameraPosition.x - components[i].position.x, y: e.offsetY + cameraPosition.y - components[i].position.y};
                 currentMouseMode = "moveComponent";
                 return;
             }
@@ -356,7 +362,7 @@ canvas.addEventListener('mousedown', function(e)
             
             if(currentMouseMode == "connectOutput" && selectedComponent != null)
             {
-                let inWhichInput = components[i].inWhichInputIsPoint(point);
+                let inWhichInput = components[i].inWhichInputIsPoint(point, cameraPosition);
               
                 if(inWhichInput != -1)
                 {
@@ -401,7 +407,7 @@ canvas.addEventListener('mousedown', function(e)
     if(e.button == 0 && currentMouseMode == "connectOutput" && selectedComponent != null)
     {
         //left mouse button
-        currentLinePositions.push({x: e.offsetX, y: e.offsetY});
+        currentLinePositions.push({x: e.offsetX - cameraPosition.x, y: e.offsetY + cameraPosition.y});
     }
   
   
@@ -419,11 +425,38 @@ canvas.addEventListener('mousemove', function(e)
     {
         if(currentMouseMode == "moveComponent")
         {
-            selectedComponent.position = {x: e.offsetX - selectedComponentOffset.x, y: e.offsetY - selectedComponentOffset.y};
+            selectedComponent.position = {x: e.offsetX + cameraPosition.x - selectedComponentOffset.x, y: e.offsetY + cameraPosition.y - selectedComponentOffset.y};
         }
         
     }
 });
+
+
+function handleArrowKeys(key)
+{
+    if(key == "ArrowRight")
+    {
+        cameraPosition.x += scrollAmount;
+    }
+    else if(key == "ArrowLeft")
+    {
+        cameraPosition.x -= scrollAmount;
+    }
+
+    if(key == "ArrowUp")
+    {
+        cameraPosition.y -= scrollAmount;
+    }
+    else if(key == "ArrowDown")
+    {
+        cameraPosition.y += scrollAmount;
+    }
+
+    if(currentMouseMode == "moveComponent" && selectedComponent != null)
+    {
+        selectedComponent.position = {x: mousePosition.x - selectedComponentOffset.x + cameraPosition.x, y: mousePosition.y - selectedComponentOffset.y + cameraPosition.y};
+    }
+}
 
 window.addEventListener('keydown', function(event) {
     let key = event.key;
@@ -434,7 +467,7 @@ window.addEventListener('keydown', function(event) {
         let componentDeleted = null;
         for(let i=0;i<components.length;i++)
         {
-            if(components[i].isPointInComponent(mousePosition))
+            if(components[i].isPointInComponent(mousePosition, cameraPosition))
             {
                 componentDeleted = components[i];
                 components[i].deleteComponent();
@@ -469,6 +502,13 @@ window.addEventListener('keydown', function(event) {
         }
 
     }
+
+    if(key=="ArrowRight" || key=="ArrowLeft" || key=="ArrowUp" || key=="ArrowDown")
+    {
+        handleArrowKeys(key);
+    }
+    
+
 });
 
 

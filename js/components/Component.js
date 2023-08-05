@@ -32,19 +32,19 @@ class Component
         return this.name;
     }
 
-    draw(context)
+    draw(context, cameraPosition)
     {
         context.fillStyle = this.color;
         context.beginPath();
         //console.log(this.size);
-        context.rect(this.position.x, this.position.y, this.size.x, this.size.y);
+        context.rect(this.position.x - cameraPosition.x, this.position.y - cameraPosition.y, this.size.x, this.size.y);
         context.fill();
 
         for(let i=0;i<this.inputs.length;i++)
         {
             context.fillStyle = "rgba(50, 50, 50, 255)";
             context.beginPath();
-            context.arc(this.position.x + 4, this.position.y + i*20 + 10, 8, 0, 2 * Math.PI);
+            context.arc(this.position.x + 4 - cameraPosition.x, this.position.y - cameraPosition.y + i*20 + 10, 8, 0, 2 * Math.PI);
             context.fill();
         }
 
@@ -52,48 +52,49 @@ class Component
         {
             context.fillStyle = "rgba(50, 50, 50, 255)";
             context.beginPath();
-            context.arc(this.position.x -4 + this.size.x, this.position.y + i*20 + 10, 8, 0, 2 * Math.PI);
+            context.arc(this.position.x -4 + this.size.x - cameraPosition.x, this.position.y  - cameraPosition.y + i*20 + 10, 8, 0, 2 * Math.PI);
             context.fill();
         }
 
         context.fillStyle = "rgba(255, 255, 255, 255)";
         context.font = "12px serif";
-        context.fillText(this.name, this.position.x + (this.size.x/2) - (3 * this.name.length), this.position.y + this.size.y/2);
+        context.fillText(this.name, this.position.x - cameraPosition.x + (this.size.x/2) - (3 * this.name.length), 
+        this.position.y - cameraPosition.y + this.size.y/2);
 
         
        
     }
 
-    getOutputPositionCenter(index)
+    getOutputPositionCenter(index, cameraPosition)
     {
         return {x: this.position.x + this.size.x, y: this.position.y + index*20 + 10};
     }
-    getInputPositionCenter(index)
+    getInputPositionCenter(index, cameraPosition)
     {
         return {x: this.position.x, y: this.position.y + index*20 + 10};
     }
 
-    inWhichOutputIsPoint(point)
+    inWhichOutputIsPoint(point, cameraPosition)
     {
-        return this.inWhichCircleIsPoint(point, this.outputs, this.size.x);
+        return this.inWhichCircleIsPoint(point, this.outputs, this.size.x, cameraPosition);
     }
 
-    inWhichInputIsPoint(point)
+    inWhichInputIsPoint(point, cameraPosition)
     {
-        return this.inWhichCircleIsPoint(point, this.inputs, 0);
+        return this.inWhichCircleIsPoint(point, this.inputs, 0, cameraPosition);
     }
 
-    inWhichCircleIsPoint(point, arrayOfPorts, offsetX)
+    inWhichCircleIsPoint(point, arrayOfPorts, offsetX, cameraPosition)
     {
         for(let i=0;i< arrayOfPorts.length;i++)
         {
             //center x, center y, radius, start angle, end angle
             //context.arc(this.position.x, this.position.y + i*20 + 10, 8, 0, 2 * Math.PI);
 
-            let firstExpression = point.x - (this.position.x + offsetX);
+            let firstExpression = point.x - (this.position.x - cameraPosition.x + offsetX);
             firstExpression *= firstExpression;
 
-            let secondExpression = point.y - (this.position.y + i*20 + 10);
+            let secondExpression = point.y - (this.position.y - cameraPosition.y + i*20 + 10);
             secondExpression *= secondExpression;
 
             if(firstExpression + secondExpression <= 8*8)
@@ -106,11 +107,11 @@ class Component
         return -1;
     }
 
-    isPointInComponent(point)
+    isPointInComponent(point, cameraPosition)
     {
-        if(point.x >= this.position.x && point.x <= this.position.x + this.size.x)
+        if(point.x >= this.position.x  - cameraPosition.x && point.x <= this.position.x - cameraPosition.x + this.size.x)
         {
-            if(point.y >= this.position.y && point.y <= this.position.y + this.size.y)
+            if(point.y >= this.position.y - cameraPosition.y && point.y <= this.position.y + this.size.y - cameraPosition.y)
             {
                 return true;
             }
