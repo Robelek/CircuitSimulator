@@ -442,7 +442,7 @@ canvas.addEventListener('mousedown', function(e)
     {
         //left mouse button
 
-        currentLinePositions.push({x: e.offsetX + cameraPosition.x, y: e.offsetY + cameraPosition.y});
+        currentLinePositions.push({x: e.offsetX/zoom + cameraPosition.x, y: e.offsetY/zoom + cameraPosition.y});
 
         console.log(currentLinePositions[currentLinePositions.length - 1]);
     }
