@@ -266,7 +266,7 @@ window.onload = function()
             }
         }
 
-        newObject.position = {x: e.offsetX - cameraPosition.x, y: e.offsetY + cameraPosition.y};
+        newObject.position = {x: e.offsetX/zoom + cameraPosition.x, y: e.offsetY/zoom + cameraPosition.y};
 
         components.push(newObject);
     });
@@ -400,6 +400,7 @@ canvas.addEventListener('mousedown', function(e)
               
                 if(inWhichInput != -1)
                 {
+                    console.log("Hey!");
                     components[i].connectToInput(selectedComponent, outputID, inWhichInput, events);
 
 
