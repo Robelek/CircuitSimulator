@@ -75,6 +75,7 @@ class Component
     {
         return {x: (this.position.x + this.size.x)*zoom, y: (this.position.y + index*20 + 10)*zoom};
     }
+    
     getInputPositionCenter(index, cameraPosition, zoom)
     {
         return {x:(this.position.x)*zoom, y:( this.position.y + index*20 + 10)*zoom};

@@ -64,17 +64,18 @@ let keysPressed = {
     "ArrowDown": false,
 }
 
-function drawConnectionLine(positionA, positionB)
-{
+function drawConnectionLine(positionA, positionB) {
+    context.strokeStyle = "rgba(255, 255, 255, 255)";
+    context.beginPath();
 
-        context.strokeStyle = "rgba(255, 255, 255, 255)";
-        context.beginPath();
-        context.moveTo((positionA.x - cameraPosition.x) * zoom, (positionA.y - cameraPosition.y)*zoom);
-        context.lineTo((positionB.x - cameraPosition.x)  * zoom, (positionB.y - cameraPosition.y) * zoom);
-        context.stroke();
-   
+    const offset = {
+        x: cameraPosition.x * zoom,
+        y: cameraPosition.y * zoom
+    };
 
-   
+    context.moveTo((positionA.x - offset.x), (positionA.y - offset.y));
+    context.lineTo((positionB.x - offset.x), (positionB.y - offset.y));
+    context.stroke();
 }
 
 function drawComponents()
@@ -94,8 +95,9 @@ function drawComponents()
         if(thisLinePositions.length > 0)
         {
             let firstPos = connectionLines[i].outputComponent.getOutputPositionCenter(connectionLines[i].outputID, cameraPosition, zoom);
-
             drawConnectionLine(firstPos, thisLinePositions[0]);
+
+
             for(let j=0;j<thisLinePositions.length - 1;j++)
             {
                 drawConnectionLine(thisLinePositions[j], thisLinePositions[j+1]);
@@ -120,17 +122,26 @@ function drawComponents()
 
             if(currentLinePositions.length > 0)
             {
-                drawConnectionLine(firstPos, currentLinePositions[0]);
+                drawConnectionLine(firstPos, 
+                    {x: currentLinePositions[0].x*zoom ,
+                        y: currentLinePositions[0].y*zoom});
                 for(let j=0;j<currentLinePositions.length - 1;j++)
                 {
-                    drawConnectionLine(currentLinePositions[j], currentLinePositions[j+1]);
+                    drawConnectionLine( 
+                        {x: currentLinePositions[j].x*zoom ,
+                        y: currentLinePositions[j].y*zoom},
+                        {x: currentLinePositions[j+1].x*zoom ,
+                            y: currentLinePositions[j+1].y*zoom});
                 }
-                drawConnectionLine(currentLinePositions[currentLinePositions.length - 1], 
-                    {x: mousePosition.x - cameraPosition.x, y: mousePosition.y + cameraPosition.y});
+                
+                drawConnectionLine(
+                    {x: currentLinePositions[currentLinePositions.length - 1].x*zoom ,
+                     y: currentLinePositions[currentLinePositions.length - 1].y*zoom} ,
+                    {x: mousePosition.x+cameraPosition.x*zoom, y: mousePosition.y+cameraPosition.y*zoom});
             }
             else
             {
-                drawConnectionLine(firstPos, {x: mousePosition.x - cameraPosition.x, y: mousePosition.y + cameraPosition.y});
+                drawConnectionLine(firstPos, {x: mousePosition.x+cameraPosition.x*zoom, y: mousePosition.y+cameraPosition.y*zoom});
             }
            
 
@@ -203,11 +214,16 @@ function handleEvents()
 
 }
 
+function updatePositionDisplay()
+{
+    cameraPositionDisplay.innerText = `Camera position: (${cameraPosition.x.toFixed(2)}, ${cameraPosition.y.toFixed(2)} | Zoom: ${zoom.toFixed(2)})`;
+}
+
 window.onload = function()
 {
 
     cameraPositionDisplay = document.getElementById("cameraPositionDisplay");
-    cameraPositionDisplay.innerText = `Camera position: (${cameraPosition.x}, ${cameraPosition.y} | Zoom: ${zoom})`;
+    updatePositionDisplay();
 
     let componentList = document.getElementsByClassName("componentList")[0];
     
@@ -425,7 +441,10 @@ canvas.addEventListener('mousedown', function(e)
     if(e.button == 0 && currentMouseMode == "connectOutput" && selectedComponent != null)
     {
         //left mouse button
-        currentLinePositions.push({x: e.offsetX - cameraPosition.x, y: e.offsetY + cameraPosition.y});
+
+        currentLinePositions.push({x: e.offsetX + cameraPosition.x, y: e.offsetY + cameraPosition.y});
+
+        console.log(currentLinePositions[currentLinePositions.length - 1]);
     }
   
   
@@ -474,12 +493,12 @@ function handleArrowKeys(key)
 
     if(currentMouseMode == "moveComponent" && selectedComponent != null)
     {
-        selectedComponent.position = {x: mousePosition.x - selectedComponentOffset.x + cameraPosition.x,
-             y: mousePosition.y - selectedComponentOffset.y + cameraPosition.y};
+        selectedComponent.position = {x: mousePosition.x - selectedComponentOffset.x + cameraPosition.x*zoom,
+             y: mousePosition.y - selectedComponentOffset.y + cameraPosition.y*zoom};
     }
 
 
-    cameraPositionDisplay.innerText = `Camera position: (${cameraPosition.x}, ${cameraPosition.y} | Zoom: ${zoom})`;
+    updatePositionDisplay();
 }
 
 window.addEventListener("keydown", function(e) {
@@ -706,54 +725,18 @@ const filePickerOptions = {
   
   }
   
-// // the not working mouse zoom in 
-//   canvas.addEventListener("wheel", function(event) {
-//     //console.log(event.deltaY);
-
-//     let previousMouseWorldPos = {
-//         x: (mousePosition.x + cameraPosition.x) / zoom,
-//         y: (mousePosition.y + cameraPosition.y) / zoom
-//     };
-
-//     zoom -= event.deltaY * zoomAmount;
-
-//     if(zoom < 0.1)
-//     {
-//         zoom = 0.1;
-//     }
-//     if(zoom > 2)
-//     {
-//         zoom = 2;
-//     }
-
-//     let newMousePos = {
-//         x: (mousePosition.x + cameraPosition.x) / zoom,
-//         y: (mousePosition.y + cameraPosition.y) / zoom
-//     }; 
-
-//     cameraPosition.x -= (previousMouseWorldPos.x - (newMousePos.x)*zoom);
-//     cameraPosition.y -= (previousMouseWorldPos.y - (newMousePos.y)*zoom);
-
-//     cameraPositionDisplay.innerText = `Camera position: (${cameraPosition.x}, ${cameraPosition.y} | Zoom: ${zoom})`;
-//     event.preventDefault();
-
-//   });
 
 
 //the screen center version
 canvas.addEventListener("wheel", function(event) {
-    const previousZoom = zoom;
 
-    // Calculate the canvas center in world coordinates
     const canvasCenter = {
         x: canvas.width / 2 / zoom + cameraPosition.x,
         y: canvas.height / 2 / zoom + cameraPosition.y
     };
 
-    // Update the zoom level
     zoom -= event.deltaY * zoomAmount;
 
-    // Clamp the zoom level
     if (zoom < 0.1) {
         zoom = 0.1;
     }
@@ -761,11 +744,9 @@ canvas.addEventListener("wheel", function(event) {
         zoom = 2;
     }
 
-    // Calculate the new camera position to keep the canvas center unchanged
     cameraPosition.x = canvasCenter.x - canvas.width / 2 / zoom;
     cameraPosition.y = canvasCenter.y - canvas.height / 2 / zoom;
 
-    // Update the display and prevent default scrolling behavior
     cameraPositionDisplay.innerText = `Camera position: (${cameraPosition.x.toFixed(2)}, ${cameraPosition.y.toFixed(2)} | Zoom: ${zoom.toFixed(2)})`;
     event.preventDefault();
 });
