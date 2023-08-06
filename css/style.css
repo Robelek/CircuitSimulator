@@ -132,4 +132,5 @@ main > .buttonHolder
     background-color: var(--secondary);
     width:22rem;
     padding:0.5rem;
+    height:2rem;
 }

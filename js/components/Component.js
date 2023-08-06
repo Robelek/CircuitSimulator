@@ -32,19 +32,23 @@ class Component
         return this.name;
     }
 
-    draw(context, cameraPosition)
+    draw(context, cameraPosition, zoom)
     {
         context.fillStyle = this.color;
         context.beginPath();
         //console.log(this.size);
-        context.rect(this.position.x - cameraPosition.x, this.position.y - cameraPosition.y, this.size.x, this.size.y);
+
+        let realX = (this.position.x - cameraPosition.x) * zoom;
+        let realY = (this.position.y - cameraPosition.y) * zoom;
+
+        context.rect(realX, realY, this.size.x*zoom, this.size.y*zoom);
         context.fill();
 
         for(let i=0;i<this.inputs.length;i++)
         {
             context.fillStyle = "rgba(50, 50, 50, 255)";
             context.beginPath();
-            context.arc(this.position.x + 4 - cameraPosition.x, this.position.y - cameraPosition.y + i*20 + 10, 8, 0, 2 * Math.PI);
+            context.arc(realX + 4*zoom, realY + (i*20 + 10)*zoom, 8*zoom, 0, 2 * Math.PI);
             context.fill();
         }
 
@@ -52,52 +56,54 @@ class Component
         {
             context.fillStyle = "rgba(50, 50, 50, 255)";
             context.beginPath();
-            context.arc(this.position.x -4 + this.size.x - cameraPosition.x, this.position.y  - cameraPosition.y + i*20 + 10, 8, 0, 2 * Math.PI);
+            context.arc(realX -4*zoom + this.size.x*zoom, realY + (i*20 + 10)*zoom, 8*zoom, 0, 2 * Math.PI);
             context.fill();
         }
 
         context.fillStyle = "rgba(255, 255, 255, 255)";
-        context.font = "12px serif";
-        context.fillText(this.name, this.position.x - cameraPosition.x + (this.size.x/2) - (3 * this.name.length), 
-        this.position.y - cameraPosition.y + this.size.y/2);
+
+        let fontSize = Math.floor(12*zoom);
+        context.font = `${fontSize}px serif`;
+        context.fillText(this.name, realX + (this.size.x/2)*zoom - (3 * this.name.length)*zoom, 
+        realY +  this.size.y/2*zoom);
 
         
        
     }
 
-    getOutputPositionCenter(index, cameraPosition)
+    getOutputPositionCenter(index, cameraPosition, zoom)
     {
-        return {x: this.position.x + this.size.x, y: this.position.y + index*20 + 10};
+        return {x: (this.position.x + this.size.x)*zoom, y: (this.position.y + index*20 + 10)*zoom};
     }
-    getInputPositionCenter(index, cameraPosition)
+    getInputPositionCenter(index, cameraPosition, zoom)
     {
-        return {x: this.position.x, y: this.position.y + index*20 + 10};
-    }
-
-    inWhichOutputIsPoint(point, cameraPosition)
-    {
-        return this.inWhichCircleIsPoint(point, this.outputs, this.size.x, cameraPosition);
+        return {x:(this.position.x)*zoom, y:( this.position.y + index*20 + 10)*zoom};
     }
 
-    inWhichInputIsPoint(point, cameraPosition)
+    inWhichOutputIsPoint(point, cameraPosition, zoom)
     {
-        return this.inWhichCircleIsPoint(point, this.inputs, 0, cameraPosition);
+        return this.inWhichCircleIsPoint(point, this.outputs, this.size.x, cameraPosition, zoom);
     }
 
-    inWhichCircleIsPoint(point, arrayOfPorts, offsetX, cameraPosition)
+    inWhichInputIsPoint(point, cameraPosition, zoom)
+    {
+        return this.inWhichCircleIsPoint(point, this.inputs, 0, cameraPosition, zoom);
+    }
+
+    inWhichCircleIsPoint(point, arrayOfPorts, offsetX, cameraPosition, zoom)
     {
         for(let i=0;i< arrayOfPorts.length;i++)
         {
             //center x, center y, radius, start angle, end angle
             //context.arc(this.position.x, this.position.y + i*20 + 10, 8, 0, 2 * Math.PI);
 
-            let firstExpression = point.x - (this.position.x - cameraPosition.x + offsetX);
+            let firstExpression = point.x - (this.position.x - cameraPosition.x + offsetX)*zoom;
             firstExpression *= firstExpression;
 
-            let secondExpression = point.y - (this.position.y - cameraPosition.y + i*20 + 10);
+            let secondExpression = point.y - (this.position.y - cameraPosition.y + i*20 + 10)*zoom;
             secondExpression *= secondExpression;
 
-            if(firstExpression + secondExpression <= 8*8)
+            if(firstExpression + secondExpression <= 8*zoom*8*zoom)
             {
                 return i;
             }
@@ -107,11 +113,11 @@ class Component
         return -1;
     }
 
-    isPointInComponent(point, cameraPosition)
+    isPointInComponent(point, cameraPosition, zoom)
     {
-        if(point.x >= this.position.x  - cameraPosition.x && point.x <= this.position.x - cameraPosition.x + this.size.x)
+        if(point.x >= (this.position.x  - cameraPosition.x)*zoom && point.x <= (this.position.x - cameraPosition.x + this.size.x)*zoom)
         {
-            if(point.y >= this.position.y - cameraPosition.y && point.y <= this.position.y + this.size.y - cameraPosition.y)
+            if(point.y >= (this.position.y - cameraPosition.y*zoom) && point.y <= (this.position.y + this.size.y - cameraPosition.y*zoom))
             {
                 return true;
             }

@@ -48,26 +48,34 @@ class CLOCK extends Component
         super.deleteComponent();
     }
 
-    draw(context, cameraPosition)
+    draw(context, cameraPosition, zoom)
     {
         context.fillStyle = this.color;
         context.beginPath();
         //console.log(this.size);
-        context.rect(this.position.x - cameraPosition.x, this.position.y - cameraPosition.y, this.size.x, this.size.y);
+
+        let realX = (this.position.x - cameraPosition.x)*zoom;
+        let realY = (this.position.y - cameraPosition.y)*zoom;
+
+        context.rect(realX, realY, this.size.x*zoom, this.size.y*zoom);
         context.fill();
 
         for(let i=0;i<this.outputs.length;i++)
         {
             context.fillStyle = "rgba(50, 50, 50, 255)";
             context.beginPath();
-            context.arc(this.position.x - cameraPosition.x - 4 + this.size.x, this.position.y - cameraPosition.y + i*20 + 10, 8, 0, 2 * Math.PI);
+            context.arc(realX - 4*zoom + this.size.x*zoom, realY + (i*20 + 10)*zoom, 8*zoom, 0, 2 * Math.PI);
             context.fill();
         }
 
+      
         context.fillStyle = "rgba(255, 255, 255, 255)";
-        context.font = "12px serif";
-        context.fillText(this.outputs[0] + 0 + " CLK", this.position.x  - cameraPosition.x + (this.size.x/2) - (3 * this.name.length),
-         this.position.y - cameraPosition.y + this.size.y/2);
+
+        let fontSize = Math.floor(12*zoom);
+        context.font = `${fontSize}px serif`;
+
+        context.fillText(this.outputs[0] + 0 + " CLK", realX + (this.size.x/2)*zoom - (3 * this.name.length)*zoom,
+         realY +  this.size.y/2*zoom);
 
         
        

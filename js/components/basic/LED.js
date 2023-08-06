@@ -12,13 +12,17 @@ class LED extends Component
     }
 
    
-    draw(context, cameraPosition)
+    draw(context, cameraPosition, zoom)
     {
      
 
         context.fillStyle = "rgba(200,200,200,255)";
         context.beginPath();
-        context.arc(this.position.x - cameraPosition.x + this.size.x/2, this.position.y - cameraPosition.y + this.size.y /2, this.radius+2, 0, 2 * Math.PI);
+
+        let realX = (this.position.x - cameraPosition.x)*zoom;
+        let realY = (this.position.y - cameraPosition.y)*zoom;
+
+        context.arc(realX + this.size.x/2*zoom, realY + this.size.y /2*zoom, (this.radius+2)*zoom, 0, 2 * Math.PI);
         context.fill();
 
         if(this.inputs[0] == 1)
@@ -31,14 +35,14 @@ class LED extends Component
         }
        
         context.beginPath();
-        context.arc(this.position.x  - cameraPosition.x + this.size.x/2, this.position.y -cameraPosition.y + this.size.y /2, this.radius, 0, 2 * Math.PI);
+        context.arc(realX + (this.size.x/2)*zoom, realY + this.size.y /2*zoom, this.radius*zoom, 0, 2 * Math.PI);
         context.fill();
 
         for(let i=0;i<this.inputs.length;i++)
         {
             context.fillStyle = "rgba(50, 50, 50, 255)";
             context.beginPath();
-            context.arc(this.position.x - cameraPosition.x + 4, this.position.y -cameraPosition.y + i*20 + 10, 8, 0, 2 * Math.PI);
+            context.arc(realX + 4*zoom, realY + (i*20 + 10)*zoom, 8*zoom, 0, 2 * Math.PI);
             context.fill();
         }
 
