@@ -9,7 +9,7 @@ import BUFFER from "./components/basic/BUFFER.js";
 import CLOCK from "./components/basic/CLOCK.js";
 import ANDx3 from "./components/basic/ANDx3.js";
 import XOR from "./components/basic/XOR.js";
-
+import LABEL from "./components/misc/LABEL.js";
 
 
 let events = [];
@@ -26,6 +26,7 @@ let componentTemplates = [
     new BUFFER(),
     new CLOCK(events),
     new XOR(),
+    new LABEL()
 ];
 
 let components = [];
@@ -53,6 +54,8 @@ let scrollAmount = 5;
 
 let zoom = 1;
 let zoomAmount = 0.001;
+
+let targetZoom = 1;
 
 
 let cameraPositionDisplay = null;
@@ -219,6 +222,16 @@ function updatePositionDisplay()
     cameraPositionDisplay.innerText = `Camera position: (${cameraPosition.x.toFixed(2)}, ${cameraPosition.y.toFixed(2)} | Zoom: ${zoom.toFixed(2)})`;
 }
 
+//https://en.wikipedia.org/wiki/Linear_interpolation
+function lerp(startValue, endValue, t) {
+    return (1 - t) * startValue + t * endValue;
+}
+
+function updateZoom()
+{
+    zoom = lerp(zoom, targetZoom, 0.1);
+}
+
 window.onload = function()
 {
 
@@ -250,6 +263,8 @@ window.onload = function()
         componentDiv.id = i;
 
         componentList.appendChild(componentDiv);
+
+
     }
 
     canvas.addEventListener('drop', function(e)
@@ -282,6 +297,7 @@ window.onload = function()
         context.clearRect(0, 0, canvas.width, canvas.height);
         drawComponents();
         handleEvents();
+        updateZoom();
     } 
     , 1000/60);
 }
@@ -736,13 +752,13 @@ canvas.addEventListener("wheel", function(event) {
         y: canvas.height / 2 / zoom + cameraPosition.y
     };
 
-    zoom -= event.deltaY * zoomAmount;
+    targetZoom -= event.deltaY * zoomAmount;
 
-    if (zoom < 0.1) {
-        zoom = 0.1;
+    if (targetZoom < 0.1) {
+        targetZoom = 0.1;
     }
-    if (zoom > 2) {
-        zoom = 2;
+    if (targetZoom > 2) {
+        targetZoom = 2;
     }
 
     cameraPosition.x = canvasCenter.x - canvas.width / 2 / zoom;
