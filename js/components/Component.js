@@ -198,29 +198,6 @@ class Component
             result += ` ${this.outputs[j] + 0}`;
         }
 
-        // result += " inputComponentIDs:";
-        // for(let j=0; j<this.inputs.length;j++)
-        // {
-        //     if(this.inputComponents[j] == null)
-        //     {
-        //         result += ` -1`;
-        //     }
-        //     else
-        //     {
-        //         result += ` ${components.indexOf(this.inputComponents[j].component)}`;
-        //     }
-        // }
-
-        // result += " outputComponentIDs:";
-        // for(let j=0; j<this.outputs.length;j++)
-        // {
-        //     result += ` ${this.outputComponents[j].length}:`;
-        //     for(let k=0;k<this.outputComponents[j].length;k++)
-        //     {
-        //         result += ` ${components.indexOf(this.outputComponents[j][k].component)}`;
-        //     }
-        // }
-
         return result;
 
     }

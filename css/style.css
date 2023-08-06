@@ -122,3 +122,14 @@ main > .buttonHolder
     margin-top: 1rem;
     gap: 5rem;
 }
+
+.textDisplay
+{
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+
+    background-color: var(--secondary);
+    width:22rem;
+    padding:0.5rem;
+}

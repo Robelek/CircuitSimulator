@@ -10,6 +10,8 @@ import CLOCK from "./components/basic/CLOCK.js";
 import ANDx3 from "./components/basic/ANDx3.js";
 import XOR from "./components/basic/XOR.js";
 
+
+
 let events = [];
 
 let componentTemplates = [
@@ -49,6 +51,17 @@ let currentLinePositions = [];
 let cameraPosition = {x: 0, y: 0};
 let scrollAmount = 5;
 
+let zoom = 1;
+let zoomAmount = 0.001;
+
+let cameraPositionDisplay = null;
+
+let keysPressed = {
+    "ArrowLeft": false,
+    "ArrowRight": false,
+    "ArrowUp": false,
+    "ArrowDown": false,
+}
 
 function drawConnectionLine(positionA, positionB)
 {
@@ -191,6 +204,10 @@ function handleEvents()
 
 window.onload = function()
 {
+
+    cameraPositionDisplay = document.getElementById("cameraPositionDisplay");
+    cameraPositionDisplay.innerText = `Camera position: (${cameraPosition.x}, ${cameraPosition.y} | Zoom: ${zoom})`;
+
     let componentList = document.getElementsByClassName("componentList")[0];
     
     for(let i=0;i<componentTemplates.length;i++)
@@ -434,20 +451,22 @@ canvas.addEventListener('mousemove', function(e)
 
 function handleArrowKeys(key)
 {
-    if(key == "ArrowRight")
+    keysPressed[key] = true;
+
+    if(keysPressed["ArrowRight"])
     {
         cameraPosition.x += scrollAmount;
     }
-    else if(key == "ArrowLeft")
+    else if(keysPressed["ArrowLeft"])
     {
         cameraPosition.x -= scrollAmount;
     }
 
-    if(key == "ArrowUp")
+    if(keysPressed["ArrowUp"])
     {
         cameraPosition.y -= scrollAmount;
     }
-    else if(key == "ArrowDown")
+    else if(keysPressed["ArrowDown"])
     {
         cameraPosition.y += scrollAmount;
     }
@@ -456,7 +475,19 @@ function handleArrowKeys(key)
     {
         selectedComponent.position = {x: mousePosition.x - selectedComponentOffset.x + cameraPosition.x, y: mousePosition.y - selectedComponentOffset.y + cameraPosition.y};
     }
+
+
+    cameraPositionDisplay.innerText = `Camera position: (${cameraPosition.x}, ${cameraPosition.y} | Zoom: ${zoom})`;
 }
+
+window.addEventListener("keydown", function(e) {
+    let key = e.key;
+    if(key=="ArrowRight" || key=="ArrowLeft" || key=="ArrowUp" || key=="ArrowDown")
+    {
+        handleArrowKeys(key);
+        e.preventDefault();
+    }
+});
 
 window.addEventListener('keydown', function(event) {
     let key = event.key;
@@ -502,13 +533,15 @@ window.addEventListener('keydown', function(event) {
         }
 
     }
+});
 
+window.addEventListener("keyup", function(event) {
+    let key = event.key;
     if(key=="ArrowRight" || key=="ArrowLeft" || key=="ArrowUp" || key=="ArrowDown")
     {
-        handleArrowKeys(key);
+        keysPressed[key] = false;
     }
     
-
 });
 
 
@@ -534,142 +567,160 @@ const filePickerOptions = {
   
 
 
-function getCircuitData()
-{
-    let result = "";
-    result+= `${components.length} \n`;
-    for(let i=0;i<components.length;i++)
-    {
-        result += `${i} ${components[i].constructor.name} ${components[i].getDataToSave(components) } \n`;
-    }
-
-    result += `${connectionLines.length} \n`;
-
-    for(let i=0;i<connectionLines.length;i++)
-    {
-        let thisLine = connectionLines[i];
-        result += `${thisLine.linePositions.length} `;
-        for(let j=0;j<thisLine.linePositions.length;j++)
-        {
-            result += `${thisLine.linePositions[j].x} ${thisLine.linePositions[j].y} `;
-        }
-        result += `${components.indexOf(thisLine.outputComponent)} ${components.indexOf(thisLine.inputComponent)} ${thisLine.outputID} ${thisLine.inputID} \n`;
-    }
-
-
-    return result;
-}
-
-async function saveCircuit() {
-    const newHandle = await window.showSaveFilePicker(filePickerOptions);
-    const writableStream = await newHandle.createWritable();
-    await writableStream.write(getCircuitData());
-    await writableStream.close();
-  }
-
-async function loadCircuit() {
-    components = [];
-    connectionLines = []
-    selectedComponent = [];
-    currentLinePositions = [];
-    currentMouseMode = "none";
-
-
-    const [fileHandle] = await window.showOpenFilePicker(filePickerOptions);
-    const file = await fileHandle.getFile();
-    const contents = await file.text();
-
-    let lines = contents.split("\n");
-
-
-    let howManyComponents = parseInt(lines[0]);
-
-    for(let i=1;i<1+howManyComponents;i++)
-    {
-        if(lines[i] == "")
-        {
-            continue;
-        }
-        let data = lines[i].split(" ");
-
-        let thisComponent = eval("new " + data[1] + "()");
-        thisComponent.position = {x: parseInt(data[2]), y: parseInt(data[3])};
-
-        let currentIndex = 5;
-        console.log("inputs:");
-        for(let j=0;j<thisComponent.inputs.length;j++)
-        {
-            thisComponent.inputs[j] = parseInt(data[currentIndex]);
-            console.log(data[currentIndex]);
-            currentIndex++;
-        }
-
-        currentIndex++;
-
-        console.log("outputs:");
-        for(let j=0;j<thisComponent.outputs.length;j++)
-        {
-            thisComponent.outputs[j] = parseInt(data[currentIndex]);
-            console.log(data[currentIndex]);
-            currentIndex++;
-        }
-
-
-        components.push(thisComponent);
-    
-    }
-
-    let currentLineIndex = 1+howManyComponents;
-    let howManyConnectionLines = parseInt(lines[currentLineIndex]);
-    currentLineIndex++;
-
-    for(let i=0;i<howManyConnectionLines;i++)
-    {
-        /*
-        connectionLine format:
-            howManyLinePositions linePosition1.x linePosition1.y indexOfOutputComponent indexOfinputComponent outputID inputID 
-        */
-
-        let data = lines[currentLineIndex].split(" ");
-
-        let currentIndex = 0;
-        let howManyLinePositions = parseInt(data[currentIndex]);
-        currentIndex++;
-
-        let linePositions = [];
+  function getCircuitData()
+  {
+      let result = "";
+      result+= `${components.length} \n`;
+      for(let i=0;i<components.length;i++)
+      {
+          result += `${i} ${components[i].constructor.name} ${components[i].getDataToSave(components) } \n`;
+      }
   
-        for(let j=0;j<howManyLinePositions;j++)
-        {
-            linePositions.push({x: parseInt(data[currentIndex]), y: parseInt(data[currentIndex+1])});
-            currentIndex+=2;
-        }
+      result += `${connectionLines.length} \n`;
+  
+      for(let i=0;i<connectionLines.length;i++)
+      {
+          let thisLine = connectionLines[i];
+          result += `${thisLine.linePositions.length} `;
+          for(let j=0;j<thisLine.linePositions.length;j++)
+          {
+              result += `${thisLine.linePositions[j].x} ${thisLine.linePositions[j].y} `;
+          }
+          result += `${components.indexOf(thisLine.outputComponent)} ${components.indexOf(thisLine.inputComponent)} ${thisLine.outputID} ${thisLine.inputID} \n`;
+      }
+  
+  
+      return result;
+  }
+  
+  async function saveCircuit() {
+      const newHandle = await window.showSaveFilePicker(filePickerOptions);
+      const writableStream = await newHandle.createWritable();
+      await writableStream.write(getCircuitData());
+      await writableStream.close();
+    }
+  
+  async function loadCircuit() {
+      components = [];
+      connectionLines = []
+      selectedComponent = [];
+      currentLinePositions = [];
+      currentMouseMode = "none";
+  
+  
+      const [fileHandle] = await window.showOpenFilePicker(filePickerOptions);
+      const file = await fileHandle.getFile();
+      const contents = await file.text();
+  
+      let lines = contents.split("\n");
+  
+  
+      let howManyComponents = parseInt(lines[0]);
+  
+      for(let i=1;i<1+howManyComponents;i++)
+      {
+          if(lines[i] == "")
+          {
+              continue;
+          }
+          let data = lines[i].split(" ");
+  
+          let thisComponent = eval("new " + data[1] + "()");
+          thisComponent.position = {x: parseInt(data[2]), y: parseInt(data[3])};
+  
+          let currentIndex = 5;
+          console.log("inputs:");
+          for(let j=0;j<thisComponent.inputs.length;j++)
+          {
+              thisComponent.inputs[j] = parseInt(data[currentIndex]);
+              console.log(data[currentIndex]);
+              currentIndex++;
+          }
+  
+          currentIndex++;
+  
+          console.log("outputs:");
+          for(let j=0;j<thisComponent.outputs.length;j++)
+          {
+              thisComponent.outputs[j] = parseInt(data[currentIndex]);
+              console.log(data[currentIndex]);
+              currentIndex++;
+          }
+  
+  
+          components.push(thisComponent);
+      
+      }
+  
+      let currentLineIndex = 1+howManyComponents;
+      let howManyConnectionLines = parseInt(lines[currentLineIndex]);
+      currentLineIndex++;
+  
+      for(let i=0;i<howManyConnectionLines;i++)
+      {
+          /*
+          connectionLine format:
+              howManyLinePositions linePosition1.x linePosition1.y indexOfOutputComponent indexOfinputComponent outputID inputID 
+          */
+  
+          let data = lines[currentLineIndex].split(" ");
+  
+          let currentIndex = 0;
+          let howManyLinePositions = parseInt(data[currentIndex]);
+          currentIndex++;
+  
+          let linePositions = [];
+    
+          for(let j=0;j<howManyLinePositions;j++)
+          {
+              linePositions.push({x: parseInt(data[currentIndex]), y: parseInt(data[currentIndex+1])});
+              currentIndex+=2;
+          }
+  
+          let indexOfOutputComponent = parseInt(data[currentIndex]);
+          let indexOfInputComponent = parseInt(data[currentIndex+1]);
+          let outputID = parseInt(data[currentIndex+2]);
+          let inputID = parseInt(data[currentIndex+3]);
+   
+  
+          let thisConnectionLine = {linePositions: linePositions, 
+              outputComponent: components[indexOfOutputComponent], 
+              inputComponent: components[indexOfInputComponent],
+              outputID: outputID,
+              inputID: inputID}
+  
+          
+          components[indexOfInputComponent].connectToInput(components[indexOfOutputComponent], outputID, inputID, events);
+          components[indexOfOutputComponent].outputComponents[outputID].push({component:components[indexOfInputComponent], inputID: inputID});
+  
+          console.log(thisConnectionLine);
+  
+          connectionLines.push(thisConnectionLine);
+  
+          currentLineIndex++;
+      }
+  
+  
+  
+  }
+  
 
-        let indexOfOutputComponent = parseInt(data[currentIndex]);
-        let indexOfInputComponent = parseInt(data[currentIndex+1]);
-        let outputID = parseInt(data[currentIndex+2]);
-        let inputID = parseInt(data[currentIndex+3]);
- 
-
-        let thisConnectionLine = {linePositions: linePositions, 
-            outputComponent: components[indexOfOutputComponent], 
-            inputComponent: components[indexOfInputComponent],
-            outputID: outputID,
-            inputID: inputID}
-
-        
-        components[indexOfInputComponent].connectToInput(components[indexOfOutputComponent], outputID, inputID, events);
-        components[indexOfOutputComponent].outputComponents[outputID].push({component:components[indexOfInputComponent], inputID: inputID});
-
-        console.log(thisConnectionLine);
-
-        connectionLines.push(thisConnectionLine);
-
-        currentLineIndex++;
+  canvas.addEventListener("wheel", function(event) {
+    //console.log(event.deltaY);
+    zoom += event.deltaY * zoomAmount;
+    if(zoom < 0.1)
+    {
+        zoom = 0.1;
+    }
+    if(zoom > 2)
+    {
+        zoom = 2;
     }
 
+    cameraPositionDisplay.innerText = `Camera position: (${cameraPosition.x}, ${cameraPosition.y} | Zoom: ${zoom})`;
+    event.preventDefault();
 
-
-}
+  });
 
   window.saveCircuit = saveCircuit;
   window.loadCircuit = loadCircuit;
