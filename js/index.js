@@ -37,6 +37,8 @@ let context = canvas.getContext("2d");
 let selectedComponent = null;
 let selectedComponentOffset = {x: 0, y: 0};
 
+
+
 let outputID = -1;
 
 let currentMouseMode = "none";
@@ -57,6 +59,9 @@ let zoomAmount = 0.001;
 let targetZoom = 1;
 
 let boxSelectStart = null;
+let boxSelectComponentsOffset = [];
+let componentsInBoxSelect = [];
+
 
 let cameraPositionDisplay = null;
 
@@ -66,6 +71,9 @@ let keysPressed = {
     "ArrowUp": false,
     "ArrowDown": false,
 }
+
+
+
 
 function drawConnectionLine(positionA, positionB) {
     context.strokeStyle = "rgba(255, 255, 255, 255)";
@@ -487,12 +495,20 @@ canvas.addEventListener('mousedown', function(e)
 
         console.log(currentLinePositions[currentLinePositions.length - 1]);
     }
-    else if(e.button == 0 && currentMouseMode == "none" && selectedComponent == null)
+    else if(e.button == 0 && currentMouseMode == "none" && selectedComponent == null || componentsInBoxSelect == [] ||
+    componentsInBoxSelect == null)
     {
         //box select start
         currentMouseMode = "boxSelect";
         boxSelectStart = {x: e.offsetX, y: e.offsetY};
         console.log("box select start");
+
+    }
+    else if(e.button == 0 && currentMouseMode == "moveComponent" && componentsInBoxSelect != [] && componentsInBoxSelect != null)
+    {
+        componentsInBoxSelect = [];
+        boxSelectComponentsOffset = [];
+        currentMouseMode = "none";
 
     }
   
@@ -507,14 +523,24 @@ document.addEventListener('mousemove', function(e)
 canvas.addEventListener('mousemove', function(e)
 {
     ////console.log(e.offsetX + " " + e.offsetY);
-    if(selectedComponent != null)
+    if(currentMouseMode == "moveComponent")
     {
-        if(currentMouseMode == "moveComponent")
+        if(selectedComponent != null)
         {
-            selectedComponent.position = {x: e.offsetX/zoom + cameraPosition.x - selectedComponentOffset.x, y: e.offsetY/zoom + cameraPosition.y - selectedComponentOffset.y};
+                selectedComponent.position = {x: e.offsetX/zoom + cameraPosition.x - selectedComponentOffset.x,
+                 y: e.offsetY/zoom + cameraPosition.y - selectedComponentOffset.y};
         }
-        
+        else if(componentsInBoxSelect != null && componentsInBoxSelect != [])
+        {
+            for(let i=0;i<componentsInBoxSelect.length;i++)
+            {
+                componentsInBoxSelect[i].position = {x: e.offsetX/zoom + cameraPosition.x - boxSelectComponentsOffset[i].x,
+                    y: e.offsetY/zoom + cameraPosition.y - boxSelectComponentsOffset[i].y};
+            }
+        }
     }
+   
+    
 });
 
 function isPointInsideRectangle(point, rectangle)
@@ -536,8 +562,9 @@ window.addEventListener('mouseup', function(e)
     if(boxSelectStart != null && currentMouseMode == "boxSelect")
     {
         //get everything in the rectangle
-
-        let componentsInBoxSelect = [];
+        componentsInBoxSelect = [];
+        boxSelectComponentsOffset = [];
+       
 
         boxSelectStart = {x: boxSelectStart.x/zoom + cameraPosition.x, y: boxSelectStart.y/zoom + cameraPosition.y}
         let boxSelectEnd = {x: e.offsetX/zoom + cameraPosition.x, y: e.offsetY/zoom + cameraPosition.y};
@@ -576,6 +603,9 @@ window.addEventListener('mouseup', function(e)
                             , rectangle))
                
                 {
+                    boxSelectComponentsOffset.push({x: e.offsetX/zoom + cameraPosition.x - components[i].position.x,
+                         y: e.offsetY/zoom + cameraPosition.y - components[i].position.y});
+
                     componentsInBoxSelect.push(components[i]);
                 }
                 
@@ -585,47 +615,49 @@ window.addEventListener('mouseup', function(e)
             // (components[i].position.y - cameraPosition.y)*zoom, components[i].size.x*zoom, components[i].size.y*zoom);
             
         }
+      
+        //will be neccesary for storing custom components
+
+        // let selectedConnectionLines = [];
+        // for(let i=0;i<connectionLines.length;i++)
+        // {
+        //     let thisInputComponent = connectionLines[i].inputComponent;
+        //     let thisOutputComponent = connectionLines[i].outputComponent;
+
+        //     if(componentsInBoxSelect.includes(thisInputComponent) && componentsInBoxSelect.includes(thisOutputComponent))
+        //     {
+        //         selectedConnectionLines.push(connectionLines[i]);
+        //     }
+        // }
         
-        let selectedConnectionLines = [];
-        for(let i=0;i<connectionLines.length;i++)
-        {
-            let thisInputComponent = connectionLines[i].inputComponent;
-            let thisOutputComponent = connectionLines[i].outputComponent;
 
-            if(componentsInBoxSelect.includes(thisInputComponent) && componentsInBoxSelect.includes(thisOutputComponent))
-            {
-                selectedConnectionLines.push(connectionLines[i]);
-            }
-        }
-        
+        // let freeInputs = [];
 
-        let freeInputs = [];
+        // for(let i=0;i<componentsInBoxSelect.length;i++)
+        // {
+        //     for(let j=0;j<componentsInBoxSelect[i].inputs.length;j++)
+        //     {
+        //         if(componentsInBoxSelect[i].inputComponents[j] == null || 
+        //             !componentsInBoxSelect.includes(componentsInBoxSelect[i].inputComponents[j].component))
+        //         {
+        //             freeInputs.push(
+        //                 {
+        //                     component: componentsInBoxSelect[i],
+        //                     inputID: j
+        //                 });
 
-        for(let i=0;i<componentsInBoxSelect.length;i++)
-        {
-            for(let j=0;j<componentsInBoxSelect[i].inputs.length;j++)
-            {
-                if(componentsInBoxSelect[i].inputComponents[j] == null || 
-                    !componentsInBoxSelect.includes(componentsInBoxSelect[i].inputComponents[j].component))
-                {
-                    freeInputs.push(
-                        {
-                            component: componentsInBoxSelect[i],
-                            inputID: j
-                        });
+        //         }
+        //     }
+        // }
 
-                }
-            }
-        }
-
-        //working fine!
-        console.log(componentsInBoxSelect);
-        console.log(selectedConnectionLines);
-        console.log(freeInputs);
+        // //working fine!
+        // console.log(componentsInBoxSelect);
+        // console.log(selectedConnectionLines);
+        // console.log(freeInputs);
 
 
         boxSelectStart = null;
-        currentMouseMode = "none";
+        currentMouseMode = "moveComponent";
     }
    
 });
