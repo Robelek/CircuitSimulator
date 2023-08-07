@@ -213,8 +213,8 @@ function drawComponents()
         {
            
             context.beginPath();
-            context.rect(componentsInBoxSelect[i].position.x*zoom, 
-                componentsInBoxSelect[i].position.y*zoom, 
+            context.rect(componentsInBoxSelect[i].position.x*zoom - cameraPosition.x*zoom, 
+                componentsInBoxSelect[i].position.y*zoom - cameraPosition.y*zoom, 
                 componentsInBoxSelect[i].size.x*zoom, 
                 componentsInBoxSelect[i].size.y*zoom);
             context.stroke();
