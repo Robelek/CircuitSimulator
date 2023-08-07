@@ -5,6 +5,21 @@ class LABEL extends Component
     constructor()
     {
         super("LABEL", [], [], 60, "rgba(0, 100, 0, 255)");
+        this.size.y = 30;
+    }
+
+    handleRightClick()
+    {
+        this.name = prompt("Enter label text", this.name);
+        this.width = this.name.length * 8 +20;
+        
+    }
+
+    getDataToSave(components)
+    {
+        let result = super.getDataToSave(components);
+        result+= " " + this.name;
+        return result;
     }
 }
 

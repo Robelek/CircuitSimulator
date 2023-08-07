@@ -208,6 +208,15 @@ class Component
         return result;
 
     }
+
+
+    copy()
+    {
+        let componentCopy = new this.constructor();
+        componentCopy.position = {x: this.position.x, y: this.position.y};
+        return componentCopy;
+
+    }
 }
 
 export default Component;

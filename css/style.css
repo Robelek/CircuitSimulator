@@ -134,3 +134,57 @@ main > .buttonHolder
     padding:0.5rem;
     height:2rem;
 }
+
+.contextMenu
+{
+    display:flex;
+    flex-direction: column;
+    gap:0.1rem;
+    position: fixed;
+    background-color: whitesmoke;
+    min-width: 2rem;
+    min-height: 2rem;
+    justify-content: center;
+    align-items: left;
+
+    top:50%;
+    left:50%;
+
+    border-radius: 1.5rem;
+}
+
+.contextMenu.hidden
+{
+    display:none;
+}
+
+.contextMenu > .contextMenuOption
+{
+    color:black;
+    padding:1rem;
+
+    display:flex;
+    justify-content: left;
+    align-items: center;
+    gap:0.5rem;
+    transition: 0.1s;
+
+    width:100%;
+
+    cursor: pointer;
+}
+
+.contextMenu > .contextMenuOption:hover
+{
+  
+   transition: 0.1s;
+   transform:scale(1.05);
+   filter:drop-shadow(0 0 0.1rem lightgray);
+
+}
+
+.contextMenu > .contextMenuOption > img
+{
+    width: 2rem;
+    height: 2rem;
+}

@@ -5,6 +5,25 @@
         <script src="js/index.js" type="module" defer> </script>
     </head>
     <body>
+        <div class="contextMenu hidden">
+            <div class="contextMenuOption" onclick="copySelected()">
+                <img src="images/copy.svg"/> copy
+            </div>
+
+            <div class="contextMenuOption" onclick="pasteComponents()">
+                <img src="images/paste.svg"/>  paste
+            </div>
+
+
+            <div class="contextMenuOption" onclick="saveAsCustomComponent()">
+                <img src="images/saveAs.svg"/> as custom component
+            </div>
+            
+            <div class="contextMenuOption" onclick="editText()">
+                <img src="images/edit.svg"/> edit text
+            </div>
+        </div>
+
         <div id="header">
             <h1>Circuit Simulator</h1>
         </div>
@@ -14,7 +33,7 @@
                 <div class="textDisplay" id="cameraPositionDisplay">
                     Camera position: (0, 0)
                 </div>
-                <canvas id="canvas" width="800" height="600">
+                <canvas id="canvas" width="1280" height="720">
 
                 </canvas>
             </div>

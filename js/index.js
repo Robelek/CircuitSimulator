@@ -62,14 +62,20 @@ let boxSelectStart = null;
 let boxSelectComponentsOffset = [];
 let componentsInBoxSelect = [];
 
-
 let cameraPositionDisplay = null;
+let contextMenuVisible = false;
+const contextMenu = document.getElementsByClassName("contextMenu")[0];
+
+
+let copiedComponents = [];
+let copiedComponentsOffsets = [];
 
 let keysPressed = {
     "ArrowLeft": false,
     "ArrowRight": false,
     "ArrowUp": false,
     "ArrowDown": false,
+    "Shift": false,
 }
 
 
@@ -166,6 +172,25 @@ function drawComponents()
         context.stroke();
     }
 
+    if(componentsInBoxSelect.length > 0)
+    {
+        context.strokeStyle = "rgba(0, 255, 0, 255)";
+        context.lineWidth = 2;
+
+        for(let i=0;i<componentsInBoxSelect.length;i++)
+        {
+           
+            context.beginPath();
+            context.rect(componentsInBoxSelect[i].position.x*zoom, 
+                componentsInBoxSelect[i].position.y*zoom, 
+                componentsInBoxSelect[i].size.x*zoom, 
+                componentsInBoxSelect[i].size.y*zoom);
+            context.stroke();
+
+        }
+
+        context.lineWidth = 1;
+    }
 }
 
 function handleEvents()
@@ -350,6 +375,12 @@ window.toggleSidebar = toggleSidebar;
 
 canvas.addEventListener('mousedown', function(e)
 {
+    if(contextMenuVisible)
+    {
+        contextMenu.classList.toggle("hidden");
+        contextMenuVisible = false;
+    }
+
     let point = {x: e.offsetX, y: e.offsetY};
 
     if(e.shiftKey)
@@ -403,6 +434,16 @@ canvas.addEventListener('mousedown', function(e)
                     }
                 }
             }
+        }
+
+        if(!contextMenuVisible)
+        {
+            contextMenu.style.left = e.clientX + "px";
+            contextMenu.style.top = e.clientY + "px";
+        
+            contextMenu.classList.toggle("hidden");
+            contextMenuVisible = true;
+
         }
         
         return;
@@ -616,45 +657,7 @@ window.addEventListener('mouseup', function(e)
             
         }
       
-        //will be neccesary for storing custom components
-
-        // let selectedConnectionLines = [];
-        // for(let i=0;i<connectionLines.length;i++)
-        // {
-        //     let thisInputComponent = connectionLines[i].inputComponent;
-        //     let thisOutputComponent = connectionLines[i].outputComponent;
-
-        //     if(componentsInBoxSelect.includes(thisInputComponent) && componentsInBoxSelect.includes(thisOutputComponent))
-        //     {
-        //         selectedConnectionLines.push(connectionLines[i]);
-        //     }
-        // }
-        
-
-        // let freeInputs = [];
-
-        // for(let i=0;i<componentsInBoxSelect.length;i++)
-        // {
-        //     for(let j=0;j<componentsInBoxSelect[i].inputs.length;j++)
-        //     {
-        //         if(componentsInBoxSelect[i].inputComponents[j] == null || 
-        //             !componentsInBoxSelect.includes(componentsInBoxSelect[i].inputComponents[j].component))
-        //         {
-        //             freeInputs.push(
-        //                 {
-        //                     component: componentsInBoxSelect[i],
-        //                     inputID: j
-        //                 });
-
-        //         }
-        //     }
-        // }
-
-        // //working fine!
-        // console.log(componentsInBoxSelect);
-        // console.log(selectedConnectionLines);
-        // console.log(freeInputs);
-
+       
 
         boxSelectStart = null;
         currentMouseMode = "moveComponent";
@@ -705,46 +708,85 @@ window.addEventListener("keydown", function(e) {
 
 window.addEventListener('keydown', function(event) {
     let key = event.key;
+
+    if(event.shiftKey)
+    {
+        keysPressed["Shift"] = true;
+    }
     if(key == "Delete")
     {
         console.log("delete");
-
-        let componentDeleted = null;
-        for(let i=0;i<components.length;i++)
+        
+        if(componentsInBoxSelect.length > 0)
         {
-            if(components[i].isPointInComponent(mousePosition, cameraPosition, zoom))
+            for(let i=0;i<components.length;i++)
             {
-                componentDeleted = components[i];
-                components[i].deleteComponent();
-                components.splice(i, 1);
-                break;
-            }
-        }
-
-        for(let i=0;i<connectionLines.length;i++)
-        {
-            //console.log(connectionLines[i]);
-            if(connectionLines[i].inputComponent == componentDeleted || connectionLines[i].outputComponent == componentDeleted)
-            {
-                if(connectionLines[i].inputComponent == componentDeleted)
+                if(componentsInBoxSelect.includes(components[i]))
                 {
-                    events.push({type: "valueChanged", component: connectionLines[i].outputComponent});
-                }
-                else
-                {
-                    events.push({type: "valueChanged", component: connectionLines[i].inputComponent});
-                }
-
-                connectionLines.splice(i, 1);
-                if(i>0)
-                {
+                    components[i].deleteComponent();
+                    components.splice(i, 1);
                     i--;
                 }
+            }
 
-               
+            for(let i=0;i<connectionLines.length;i++)
+            {
+                if(componentsInBoxSelect.includes(connectionLines[i].inputComponent) || componentsInBoxSelect.includes(connectionLines[i].outputComponent))
+                {
+                    connectionLines[i].deleteConnectionLine();
+                    connectionLines.splice(i, 1);
+                    i--;
+                    if(i<0)
+                    {
+                        i=0;
+                    }
+                }
 
             }
+            componentsInBoxSelect = [];
+            boxSelectComponentsOffset = [];
         }
+        else
+        {
+            let componentDeleted = null;
+            for(let i=0;i<components.length;i++)
+            {
+                if(components[i].isPointInComponent(mousePosition, cameraPosition, zoom))
+                {
+                    componentDeleted = components[i];
+                    components[i].deleteComponent();
+                    components.splice(i, 1);
+                    break;
+                }
+            }
+    
+            for(let i=0;i<connectionLines.length;i++)
+            {
+                //console.log(connectionLines[i]);
+                if(connectionLines[i].inputComponent == componentDeleted || connectionLines[i].outputComponent == componentDeleted)
+                {
+                    if(connectionLines[i].inputComponent == componentDeleted)
+                    {
+                        events.push({type: "valueChanged", component: connectionLines[i].outputComponent});
+                    }
+                    else
+                    {
+                        events.push({type: "valueChanged", component: connectionLines[i].inputComponent});
+                    }
+    
+                    connectionLines.splice(i, 1);
+                    if(i>0)
+                    {
+                        i--;
+                    }
+    
+                   
+    
+                }
+            }
+        }
+
+       
 
     }
 });
@@ -755,14 +797,23 @@ window.addEventListener("keyup", function(event) {
     {
         keysPressed[key] = false;
     }
+    else if(event.shiftKey)
+    {
+        keysPressed["Shift"] = false;
+    }
     
 });
 
 
 
 //disabling right click menu
-canvas.addEventListener("contextmenu", (e) => {
+contextMenu.addEventListener("contextmenu", (e) => {
     e.preventDefault();
+});
+canvas.addEventListener("contextmenu", (e) => {
+    console.log("try!");
+    e.preventDefault();
+
 });
 
 const filePickerOptions = {
@@ -861,7 +912,10 @@ const filePickerOptions = {
               currentIndex++;
           }
   
-  
+          if(data[1] == "LABEL")
+          {
+            thisComponent.name = data[currentIndex];
+          }
           components.push(thisComponent);
       
       }
@@ -942,4 +996,135 @@ canvas.addEventListener("wheel", function(event) {
   window.saveCircuit = saveCircuit;
   window.loadCircuit = loadCircuit;
 
+function editText()
+{
+    let text = prompt("Enter text to display", "Hello world!");
+    console.log(text);
+}
 
+function saveAsCustomComponent()
+{
+    if(componentsInBoxSelect != [] && componentsInBoxSelect.length >0)
+    {
+        let componentName = prompt("Enter new component name", "MyComponent");
+        console.log(componentName);
+
+        
+
+        let selectedConnectionLines = [];
+        for(let i=0;i<connectionLines.length;i++)
+        {
+            let thisInputComponent = connectionLines[i].inputComponent;
+            let thisOutputComponent = connectionLines[i].outputComponent;
+
+            if(componentsInBoxSelect.includes(thisInputComponent) && componentsInBoxSelect.includes(thisOutputComponent))
+            {
+                selectedConnectionLines.push(connectionLines[i]);
+            }
+        }
+        
+
+        let freeInputs = [];
+
+        for(let i=0;i<componentsInBoxSelect.length;i++)
+        {
+            for(let j=0;j<componentsInBoxSelect[i].inputs.length;j++)
+            {
+                if(componentsInBoxSelect[i].inputComponents[j] == null || 
+                    !componentsInBoxSelect.includes(componentsInBoxSelect[i].inputComponents[j].component))
+                {
+                    freeInputs.push(
+                        {
+                            component: componentsInBoxSelect[i],
+                            inputID: j
+                        });
+
+                }
+            }
+        }
+
+        //working fine!
+        console.log(componentsInBoxSelect);
+        console.log(selectedConnectionLines);
+        console.log(freeInputs);
+
+
+        contextMenuVisible = false;
+        contextMenu.classList.add("hidden");
+
+
+        componentsInBoxSelect = [];
+        currentMouseMode = "none";
+        
+
+
+
+
+    }
+    else
+    {
+        alert("No components selected!");
+    }
+    
+}
+
+function copySelected()
+{
+    let middlePosition = {x:0, y:0};
+    for(let i=0;i<componentsInBoxSelect.length;i++)
+    {
+        copiedComponents.push(componentsInBoxSelect[i].copy());
+
+        middlePosition = {x:middlePosition.x + copiedComponents[i].position.x,
+            y:middlePosition.y + copiedComponents[i].position.y};
+    }
+
+    middlePosition = {x: middlePosition.x / componentsInBoxSelect.length,
+        y:middlePosition.y / componentsInBoxSelect.length};
+
+    for(let i=0;i<copiedComponents.length;i++)
+    {
+        copiedComponentsOffsets.push({x: middlePosition.x - copiedComponents[i].position.x,
+            y: middlePosition.y - copiedComponents[i].position.y});
+    }
+
+    contextMenuVisible = false;
+    contextMenu.classList.add("hidden");
+
+    componentsInBoxSelect = [];
+
+    console.log(copiedComponentsOffsets);
+}
+
+function pasteComponents()
+{
+    componentsInBoxSelect = [];
+    boxSelectComponentsOffset = [];
+
+    for(let i=0;i<copiedComponents.length;i++)
+    {
+
+        let anotherCopy = copiedComponents[i].copy();
+        
+        // selectedComponent.position = {x: mousePosition.x - selectedComponentOffset.x + cameraPosition.x*zoom,
+        //     y: mousePosition.y - selectedComponentOffset.y + cameraPosition.y*zoom};
+            
+        anotherCopy.position = {x: cameraPosition.x*zoom - copiedComponentsOffsets[i].x,
+         y: cameraPosition.y*zoom - copiedComponentsOffsets[i].y};
+
+        console.log(anotherCopy.position);
+        components.push(anotherCopy);
+
+        componentsInBoxSelect.push(anotherCopy);
+        boxSelectComponentsOffset.push(copiedComponentsOffsets[i]);
+    }
+
+    currentMouseMode = "moveComponent";
+    contextMenuVisible = false;
+    contextMenu.classList.add("hidden");
+}
+
+window.editText = editText;
+window.saveAsCustomComponent = saveAsCustomComponent;
+window.copySelected = copySelected;
+window.pasteComponents = pasteComponents;
