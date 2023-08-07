@@ -11,7 +11,13 @@ class LABEL extends Component
     handleRightClick()
     {
         this.name = prompt("Enter label text", this.name);
+        if(typeof  this.name  !== "string")
+        {
+            this.name = "";
+        }
         this.width = this.name.length * 8 +20;
+
+        return true;
         
     }
 

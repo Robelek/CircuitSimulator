@@ -120,15 +120,20 @@ function drawComponents()
         if(thisLinePositions.length > 0)
         {
             let firstPos = connectionLines[i].outputComponent.getOutputPositionCenter(connectionLines[i].outputID, cameraPosition, zoom);
-            drawConnectionLine(firstPos, thisLinePositions[0]);
+            drawConnectionLine(firstPos, {x: thisLinePositions[0].x*zoom ,
+                y: thisLinePositions[0].y*zoom});
 
 
             for(let j=0;j<thisLinePositions.length - 1;j++)
             {
-                drawConnectionLine(thisLinePositions[j], thisLinePositions[j+1]);
+                drawConnectionLine({x: thisLinePositions[j].x*zoom ,
+                    y: thisLinePositions[j].y*zoom}, 
+                    {x: thisLinePositions[j+1].x*zoom ,
+                        y: thisLinePositions[j+1].y*zoom});
             }
 
-            drawConnectionLine(thisLinePositions[thisLinePositions.length - 1], 
+            drawConnectionLine({x: thisLinePositions[thisLinePositions.length - 1].x*zoom ,
+                y: thisLinePositions[thisLinePositions.length - 1].y*zoom}, 
                 connectionLines[i].inputComponent.getInputPositionCenter(connectionLines[i].inputID, cameraPosition, zoom));
         }
         else
@@ -186,11 +191,13 @@ function drawComponents()
                 drawConnectionLine(
                     {x: currentLinePositions[currentLinePositions.length - 1].x*zoom ,
                      y: currentLinePositions[currentLinePositions.length - 1].y*zoom} ,
-                    {x: connectionMousePos.x+cameraPosition.x*zoom, y: connectionMousePos.y+cameraPosition.y*zoom});
+                    {x: connectionMousePos.x, y: connectionMousePos.y});
             }
             else
             {
-                drawConnectionLine(firstPos, {x: connectionMousePos.x+cameraPosition.x*zoom, y: connectionMousePos.y+cameraPosition.y*zoom});
+                drawConnectionLine(firstPos, 
+                    {x: connectionMousePos.x,
+                         y: connectionMousePos.y});
             }
            
 
@@ -448,6 +455,7 @@ canvas.addEventListener('mousedown', function(e)
                 selectedComponent = null;
     
             }
+            return true;
         }
         else
         {
