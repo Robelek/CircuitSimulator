@@ -54,9 +54,9 @@ let scrollAmount = 5;
 
 let zoom = 1;
 let zoomAmount = 0.001;
-
 let targetZoom = 1;
 
+let boxSelectStart = null;
 
 let cameraPositionDisplay = null;
 
@@ -150,6 +150,13 @@ function drawComponents()
 
     }
 
+    if(boxSelectStart != null)
+    {
+        context.strokeStyle = "rgba(0, 255, 0, 255)";
+        context.beginPath();
+        context.rect(boxSelectStart.x, boxSelectStart.y, mousePosition.x - boxSelectStart.x, mousePosition.y - boxSelectStart.y);
+        context.stroke();
+    }
 
 }
 
@@ -480,6 +487,14 @@ canvas.addEventListener('mousedown', function(e)
 
         console.log(currentLinePositions[currentLinePositions.length - 1]);
     }
+    else if(e.button == 0 && currentMouseMode == "none" && selectedComponent == null)
+    {
+        //box select start
+        currentMouseMode = "boxSelect";
+        boxSelectStart = {x: e.offsetX, y: e.offsetY};
+        console.log("box select start");
+
+    }
   
   
 });
@@ -502,6 +517,118 @@ canvas.addEventListener('mousemove', function(e)
     }
 });
 
+function isPointInsideRectangle(point, rectangle)
+{
+    if(point.x > rectangle.x && point.x < rectangle.x + rectangle.width)
+    {
+        if(point.y > rectangle.y && point.y < rectangle.y + rectangle.height)
+        {
+            return true;
+        }
+    }
+
+    return false;
+
+}
+window.addEventListener('mouseup', function(e)
+{
+    
+    if(boxSelectStart != null && currentMouseMode == "boxSelect")
+    {
+        //get everything in the rectangle
+
+        let componentsInBoxSelect = [];
+
+        boxSelectStart = {x: boxSelectStart.x/zoom + cameraPosition.x, y: boxSelectStart.y/zoom + cameraPosition.y}
+        let boxSelectEnd = {x: e.offsetX/zoom + cameraPosition.x, y: e.offsetY/zoom + cameraPosition.y};
+     
+       
+
+        let rectangle = {x: Math.min(boxSelectStart.x, boxSelectEnd.x)*zoom - cameraPosition.x*zoom,
+             y: Math.min(boxSelectStart.y, boxSelectEnd.y)*zoom - cameraPosition.y*zoom, 
+             width: Math.abs(boxSelectStart.x - boxSelectEnd.x)*zoom, 
+             height: Math.abs(boxSelectStart.y - boxSelectEnd.y)*zoom};
+
+        //  context.beginPath();
+        // context.fillStyle = "rgba(255, 0, 255, 255)";
+        // context.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+
+            
+        // context.beginPath();
+        // context.fillStyle = "rgba(255, 0, 255, 255)";
+        // context.fillRect(rectangle.x*zoom - cameraPosition.x*zoom, rectangle.y*zoom - cameraPosition.y*zoom, rectangle.width*zoom, rectangle.height*zoom);
+
+
+
+        for(let i=0;i<components.length;i++)
+        {
+            if(isPointInsideRectangle({x: (components[i].position.x + components[i].size.x - cameraPosition.x)*zoom, 
+                y: (components[i].position.y - cameraPosition.y)*zoom}
+                , rectangle) ||
+                isPointInsideRectangle({x: (components[i].position.x - cameraPosition.x)*zoom, 
+                    y: (components[i].position.y - cameraPosition.y)*zoom}
+                    , rectangle) ||
+                    isPointInsideRectangle({x: (components[i].position.x - cameraPosition.x)*zoom, 
+                        y: (components[i].position.y + components[i].size.y - cameraPosition.y)*zoom}
+                        , rectangle) ||
+                        isPointInsideRectangle({x: (components[i].position.x + components[i].size.x - cameraPosition.x)*zoom, 
+                            y: (components[i].position.y + components[i].size.y - cameraPosition.y)*zoom}
+                            , rectangle))
+               
+                {
+                    componentsInBoxSelect.push(components[i]);
+                }
+                
+            // context.beginPath();
+            // context.fillStyle = "rgba(255, 255, 0, 255)";
+            // context.fillRect((components[i].position.x - cameraPosition.x)*zoom, 
+            // (components[i].position.y - cameraPosition.y)*zoom, components[i].size.x*zoom, components[i].size.y*zoom);
+            
+        }
+        
+        let selectedConnectionLines = [];
+        for(let i=0;i<connectionLines.length;i++)
+        {
+            let thisInputComponent = connectionLines[i].inputComponent;
+            let thisOutputComponent = connectionLines[i].outputComponent;
+
+            if(componentsInBoxSelect.includes(thisInputComponent) && componentsInBoxSelect.includes(thisOutputComponent))
+            {
+                selectedConnectionLines.push(connectionLines[i]);
+            }
+        }
+        
+
+        let freeInputs = [];
+
+        for(let i=0;i<componentsInBoxSelect.length;i++)
+        {
+            for(let j=0;j<componentsInBoxSelect[i].inputs.length;j++)
+            {
+                if(componentsInBoxSelect[i].inputComponents[j] == null || 
+                    !componentsInBoxSelect.includes(componentsInBoxSelect[i].inputComponents[j].component))
+                {
+                    freeInputs.push(
+                        {
+                            component: componentsInBoxSelect[i],
+                            inputID: j
+                        });
+
+                }
+            }
+        }
+
+        //working fine!
+        console.log(componentsInBoxSelect);
+        console.log(selectedConnectionLines);
+        console.log(freeInputs);
+
+
+        boxSelectStart = null;
+        currentMouseMode = "none";
+    }
+   
+});
 
 function handleArrowKeys(key)
 {
