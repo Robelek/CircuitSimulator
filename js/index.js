@@ -79,7 +79,15 @@ let keysPressed = {
 }
 
 
+function abs(number)
+{
+    if(number < 0)
+    {
+        return -number;
+    }
 
+    return number;
+}
 
 function drawConnectionLine(positionA, positionB) {
     context.strokeStyle = "rgba(255, 255, 255, 255)";
@@ -132,6 +140,30 @@ function drawComponents()
        
     }
 
+    let connectionMousePos = {x: mousePosition.x + cameraPosition.x*zoom, y: mousePosition.y + cameraPosition.y*zoom};
+    if(keysPressed["Shift"] && currentMouseMode == "connectOutput")
+    {
+        let previousPos = null;
+        if(currentLinePositions.length>0)
+        {
+            previousPos = currentLinePositions[currentLinePositions.length - 1];
+        }
+        else
+        {
+            previousPos = selectedComponent.getOutputPositionCenter(outputID, cameraPosition, zoom);
+        }
+
+        if(abs(connectionMousePos.x - previousPos.x) > abs(connectionMousePos.y - previousPos.y))
+        {
+            connectionMousePos = {x: connectionMousePos.x, y: previousPos.y - cameraPosition.y*zoom};
+        }
+        else
+        {
+            connectionMousePos = {x: previousPos.x - cameraPosition.x*zoom, y: connectionMousePos.y};
+        }
+        
+    }
+
     if(currentMouseMode == "connectOutput" && selectedComponent != null)
     {
 
@@ -154,11 +186,11 @@ function drawComponents()
                 drawConnectionLine(
                     {x: currentLinePositions[currentLinePositions.length - 1].x*zoom ,
                      y: currentLinePositions[currentLinePositions.length - 1].y*zoom} ,
-                    {x: mousePosition.x+cameraPosition.x*zoom, y: mousePosition.y+cameraPosition.y*zoom});
+                    {x: connectionMousePos.x+cameraPosition.x*zoom, y: connectionMousePos.y+cameraPosition.y*zoom});
             }
             else
             {
-                drawConnectionLine(firstPos, {x: mousePosition.x+cameraPosition.x*zoom, y: mousePosition.y+cameraPosition.y*zoom});
+                drawConnectionLine(firstPos, {x: connectionMousePos.x+cameraPosition.x*zoom, y: connectionMousePos.y+cameraPosition.y*zoom});
             }
            
 
@@ -396,8 +428,9 @@ canvas.addEventListener('mousedown', function(e)
               }
        }
 
-       return;
     }
+
+    
 
     if(e.button == 2)
     {
@@ -460,7 +493,6 @@ canvas.addEventListener('mousedown', function(e)
             selectedComponent = components[i];
             currentMouseMode = "connectOutput";
             outputID = inWhichOutput;
-            //currentLinePositions.push(components[i].getOutputPositionCenter(inWhichOutput));
             return;
         }
 
@@ -532,13 +564,44 @@ canvas.addEventListener('mousedown', function(e)
     {
         //left mouse button
 
-        currentLinePositions.push({x: e.offsetX/zoom + cameraPosition.x, y: e.offsetY/zoom + cameraPosition.y});
+        let connectionMousePos = {x:e.offsetX, y: e.offsetY};
 
-        console.log(currentLinePositions[currentLinePositions.length - 1]);
+        if(keysPressed["Shift"])
+        {
+            let previousPos = null;
+
+            console.log(currentLinePositions);
+            if(currentLinePositions.length>0)
+            {
+                previousPos = currentLinePositions[currentLinePositions.length - 1];
+            }
+            else
+            {
+                previousPos = selectedComponent.getOutputPositionCenter(outputID, cameraPosition, zoom)
+            }
+
+
+           
+
+            if(abs(mousePosition.x - previousPos.x) > abs(mousePosition.y - previousPos.y))
+            {
+                connectionMousePos = {x: mousePosition.x, y: previousPos.y - cameraPosition.y * zoom};
+            }
+            else
+            {
+                connectionMousePos = {x: previousPos.x - cameraPosition.x * zoom, y: mousePosition.y};
+            }
+        }
+       
+        console.log(connectionMousePos);
+        currentLinePositions.push({x: connectionMousePos.x/zoom + cameraPosition.x, 
+        y: connectionMousePos.y/zoom + cameraPosition.y});
+
     }
     else if(e.button == 0 && currentMouseMode == "none" && selectedComponent == null || componentsInBoxSelect == [] ||
     componentsInBoxSelect == null)
     {
+
         //box select start
         currentMouseMode = "boxSelect";
         boxSelectStart = {x: e.offsetX, y: e.offsetY};
@@ -797,7 +860,8 @@ window.addEventListener("keyup", function(event) {
     {
         keysPressed[key] = false;
     }
-    else if(event.shiftKey)
+    
+    if(!event.shiftKey)
     {
         keysPressed["Shift"] = false;
     }
