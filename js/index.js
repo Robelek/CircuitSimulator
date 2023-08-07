@@ -229,7 +229,24 @@ function lerp(startValue, endValue, t) {
 
 function updateZoom()
 {
+    const canvasCenter = {
+        x: canvas.width / 2 / zoom + cameraPosition.x,
+        y: canvas.height / 2 / zoom + cameraPosition.y
+    };
+    
     zoom = lerp(zoom, targetZoom, 0.1);
+    
+    cameraPosition.x = canvasCenter.x - canvas.width / 2 / zoom;
+    cameraPosition.y = canvasCenter.y - canvas.height / 2 / zoom;
+
+    if(selectedComponent != null)
+    {
+        if(currentMouseMode == "moveComponent")
+        {
+            selectedComponent.position = {x: mousePosition.x/zoom + cameraPosition.x - selectedComponentOffset.x, y: mousePosition.y/zoom + cameraPosition.y - selectedComponentOffset.y};
+        }
+        
+    }
 }
 
 window.onload = function()
@@ -397,7 +414,7 @@ canvas.addEventListener('mousedown', function(e)
             {
                 currentLinePositions = [];
                 selectedComponent = components[i];
-                selectedComponentOffset = {x: e.offsetX + cameraPosition.x - components[i].position.x, y: e.offsetY + cameraPosition.y - components[i].position.y};
+                selectedComponentOffset = {x: e.offsetX/zoom + cameraPosition.x - components[i].position.x, y: e.offsetY/zoom + cameraPosition.y - components[i].position.y};
                 currentMouseMode = "moveComponent";
                 return;
             }
@@ -479,7 +496,7 @@ canvas.addEventListener('mousemove', function(e)
     {
         if(currentMouseMode == "moveComponent")
         {
-            selectedComponent.position = {x: e.offsetX + cameraPosition.x - selectedComponentOffset.x, y: e.offsetY + cameraPosition.y - selectedComponentOffset.y};
+            selectedComponent.position = {x: e.offsetX/zoom + cameraPosition.x - selectedComponentOffset.x, y: e.offsetY/zoom + cameraPosition.y - selectedComponentOffset.y};
         }
         
     }
@@ -747,10 +764,7 @@ const filePickerOptions = {
 //the screen center version
 canvas.addEventListener("wheel", function(event) {
 
-    const canvasCenter = {
-        x: canvas.width / 2 / zoom + cameraPosition.x,
-        y: canvas.height / 2 / zoom + cameraPosition.y
-    };
+
 
     targetZoom -= event.deltaY * zoomAmount;
 
@@ -761,8 +775,6 @@ canvas.addEventListener("wheel", function(event) {
         targetZoom = 2;
     }
 
-    cameraPosition.x = canvasCenter.x - canvas.width / 2 / zoom;
-    cameraPosition.y = canvasCenter.y - canvas.height / 2 / zoom;
 
     cameraPositionDisplay.innerText = `Camera position: (${cameraPosition.x.toFixed(2)}, ${cameraPosition.y.toFixed(2)} | Zoom: ${zoom.toFixed(2)})`;
     event.preventDefault();
