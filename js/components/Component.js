@@ -176,11 +176,12 @@ class Component
         this.inputComponents[inputID] = null;
         this.inputs[inputID] = 0;
     }
-    disconnectOutput(component, outputID)
+
+    disconnectOutput(thisComponent, outputID)
     {
         for(let i=0;i<this.outputComponents[outputID].length;i++)
         {
-            if(this.outputComponents[outputID][i].component == component)
+            if(this.outputComponents[outputID][i].component == thisComponent)
             {
                 this.outputComponents[outputID].splice(i, 1);
                 break;
@@ -214,6 +215,7 @@ class Component
     {
         let componentCopy = new this.constructor();
         componentCopy.position = {x: this.position.x, y: this.position.y};
+        console.log(componentCopy);
         return componentCopy;
 
     }

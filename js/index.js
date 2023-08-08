@@ -61,6 +61,8 @@ let targetZoom = 1;
 let boxSelectStart = null;
 let boxSelectComponentsOffset = [];
 let componentsInBoxSelect = [];
+let connectionLinesInBoxSelect = [];
+let initialConnectionLinesInBoxSelect = [];
 
 let cameraPositionDisplay = null;
 let contextMenuVisible = false;
@@ -69,6 +71,7 @@ const contextMenu = document.getElementsByClassName("contextMenu")[0];
 
 let copiedComponents = [];
 let copiedComponentsOffsets = [];
+let copiedConnectionLines = [];
 
 let keysPressed = {
     "ArrowLeft": false,
@@ -230,6 +233,39 @@ function drawComponents()
 
         context.lineWidth = 1;
     }
+
+
+    for(let i=0;i<connectionLinesInBoxSelect.length;i++)
+            {
+                let thisLinePositions = connectionLinesInBoxSelect[i].linePositions;
+
+                if(thisLinePositions.length > 0)
+                {
+                    let firstPos = connectionLinesInBoxSelect[i].outputComponent.getOutputPositionCenter(connectionLinesInBoxSelect[i].outputID, cameraPosition, zoom);
+                    drawConnectionLine(firstPos, {x: thisLinePositions[0].x*zoom ,
+                        y: thisLinePositions[0].y*zoom});
+
+
+                    for(let j=0;j<thisLinePositions.length - 1;j++)
+                    {
+                        drawConnectionLine({x: thisLinePositions[j].x*zoom ,
+                            y: thisLinePositions[j].y*zoom}, 
+                            {x: thisLinePositions[j+1].x*zoom ,
+                                y: thisLinePositions[j+1].y*zoom});
+                    }
+
+                    drawConnectionLine({x: thisLinePositions[thisLinePositions.length - 1].x*zoom ,
+                        y: thisLinePositions[thisLinePositions.length - 1].y*zoom}, 
+                        connectionLinesInBoxSelect[i].inputComponent.getInputPositionCenter(connectionLinesInBoxSelect[i].inputID, cameraPosition, zoom));
+                }
+                else
+                {
+                    drawConnectionLine(connectionLinesInBoxSelect[i].outputComponent.getOutputPositionCenter(connectionLinesInBoxSelect[i].outputID, cameraPosition, zoom), 
+                    connectionLinesInBoxSelect[i].inputComponent.getInputPositionCenter(connectionLinesInBoxSelect[i].inputID, cameraPosition, zoom));
+                }
+        
+        
+            }
 }
 
 function handleEvents()
@@ -504,6 +540,34 @@ canvas.addEventListener('mousedown', function(e)
             return;
         }
 
+        let inWhichInput = components[i].inWhichInputIsPoint(point, cameraPosition, zoom);
+        if(inWhichInput != -1 && currentMouseMode == "none")
+        {
+            if(components[i].inputComponents[inWhichInput].component != null)
+            {
+                let connectionIndex = connectionLines.findIndex((connectionLine) =>
+                {
+                    if(connectionLine.inputComponent == components[i] && connectionLine.inputID == inWhichInput)
+                    {
+                        return true;
+                    }
+                })
+
+                currentLinePositions = connectionLines[connectionIndex].linePositions;
+                selectedComponent = connectionLines[connectionIndex].outputComponent;
+                currentMouseMode = "connectOutput";
+                outputID = connectionLines[connectionIndex].outputID;
+
+                connectionLines[connectionIndex].outputComponent.outputComponents[connectionLines[connectionIndex].outputID].component = null;
+                components[i].inputComponents[inWhichInput].component = null;
+                
+                connectionLines.splice(connectionIndex, 1);
+
+                
+            }
+            return;
+        }
+
         if(components[i].isPointInComponent(point, cameraPosition, zoom))
         {
             if(currentMouseMode == "none" && selectedComponent == null)
@@ -644,11 +708,41 @@ canvas.addEventListener('mousemove', function(e)
         }
         else if(componentsInBoxSelect != null && componentsInBoxSelect != [])
         {
+            console.log(initialConnectionLinesInBoxSelect);
             for(let i=0;i<componentsInBoxSelect.length;i++)
             {
                 componentsInBoxSelect[i].position = {x: e.offsetX/zoom + cameraPosition.x - boxSelectComponentsOffset[i].x,
                     y: e.offsetY/zoom + cameraPosition.y - boxSelectComponentsOffset[i].y};
             }
+
+            for(let i=0;i<initialConnectionLinesInBoxSelect.length;i++)
+            {
+                connectionLinesInBoxSelect.push({linePositions: [],
+                    outputComponent: initialConnectionLinesInBoxSelect[i].outputComponent,
+                    inputComponent: initialConnectionLinesInBoxSelect[i].inputComponent,
+                    outputID: initialConnectionLinesInBoxSelect[i].outputID,
+                    inputID: initialConnectionLinesInBoxSelect[i].inputID})
+                let thisLinePositions = [];
+                for(let j=0;j<initialConnectionLinesInBoxSelect[i].linePositions.length;j++)
+                {
+                    thisLinePositions.push({
+                        x:initialConnectionLinesInBoxSelect[i].linePositions[j].x,
+                        y: initialConnectionLinesInBoxSelect[i].linePositions[j].y
+                    });
+
+                    console.log(thisLinePositions[j]);
+
+                    console.log("after");
+                    thisLinePositions[j] = {x: thisLinePositions[j].x - cameraPosition.x + e.offsetX,
+                        y: thisLinePositions[j].y - cameraPosition.y + e.offsetY};
+
+                    console.log(thisLinePositions[j]);
+                }
+
+                connectionLinesInBoxSelect[i].linePositions = thisLinePositions;
+            }
+
+            
         }
     }
    
@@ -676,7 +770,8 @@ window.addEventListener('mouseup', function(e)
         //get everything in the rectangle
         componentsInBoxSelect = [];
         boxSelectComponentsOffset = [];
-       
+        connectionLinesInBoxSelect = [];
+        initialConnectionLinesInBoxSelect=[];
 
         boxSelectStart = {x: boxSelectStart.x/zoom + cameraPosition.x, y: boxSelectStart.y/zoom + cameraPosition.y}
         let boxSelectEnd = {x: e.offsetX/zoom + cameraPosition.x, y: e.offsetY/zoom + cameraPosition.y};
@@ -728,6 +823,47 @@ window.addEventListener('mouseup', function(e)
             
         }
       
+        let connectionLinesToRemoveIDs= [];
+        for(let i=0;i<connectionLines.length;i++)
+        {
+            if(componentsInBoxSelect.includes(connectionLines[i].inputComponent) && componentsInBoxSelect.includes(connectionLines[i].outputComponent))
+            {           
+
+                let linePositions = [];
+                for(let j=0;j<connectionLines[i].linePositions.length;j++)
+                {
+                    linePositions.push(
+                        {
+                            x: connectionLines[i].linePositions[j].x - cameraPosition.x*zoom - mousePosition.x,
+                            y: connectionLines[i].linePositions[j].y - cameraPosition.y*zoom - mousePosition.y
+                        }
+                    )
+
+                    console.log(linePositions[j]);
+                }
+                
+                initialConnectionLinesInBoxSelect.push(
+                    {
+                        linePositions: linePositions, 
+                            outputComponent: connectionLines[i].outputComponent, 
+                            inputComponent: connectionLines[i].inputComponent,
+                            outputID: connectionLines[i].outputID,
+                            inputID: connectionLines[i].inputID}
+
+                        );
+                    
+                connectionLinesToRemoveIDs.push(i);
+                
+            }
+        }
+
+        for(let i=connectionLines.length-1;i>=0;i--)
+        {
+            if(connectionLinesToRemoveIDs.includes(i))
+            {
+                connectionLines.splice(i, 1);
+            }
+        }
        
 
         boxSelectStart = null;
@@ -786,52 +922,55 @@ window.addEventListener('keydown', function(event) {
     }
     if(key == "Delete")
     {
-        console.log("delete");
-        
         if(componentsInBoxSelect.length > 0)
         {
+            console.log("box select delete!");
+
+            let componentsDeleted = [];
             for(let i=0;i<components.length;i++)
             {
                 if(componentsInBoxSelect.includes(components[i]))
                 {
-                    components[i].deleteComponent();
-                    components.splice(i, 1);
-                    i--;
+                    componentsDeleted.push(components[i]);
                 }
             }
 
-            for(let i=0;i<connectionLines.length;i++)
+            for(let i=connectionLines.length-1;i>=0;i--)
             {
                 if(componentsInBoxSelect.includes(connectionLines[i].inputComponent) || componentsInBoxSelect.includes(connectionLines[i].outputComponent))
                 {
-                    connectionLines[i].deleteConnectionLine();
                     connectionLines.splice(i, 1);
-                    i--;
-                    if(i<0)
-                    {
-                        i=0;
-                    }
+                  
                 }
 
             }
+
+            for(let i=0;i<componentsDeleted.length;i++)
+            {
+                let index = components.indexOf(componentsDeleted[i]);
+                componentsDeleted[i].deleteComponent();
+                components.splice(index, 1);
+            }
+
             componentsInBoxSelect = [];
             boxSelectComponentsOffset = [];
         }
         else
         {
+            console.log("normal delete");
             let componentDeleted = null;
+            let deletionIndex = -1;
             for(let i=0;i<components.length;i++)
             {
                 if(components[i].isPointInComponent(mousePosition, cameraPosition, zoom))
                 {
                     componentDeleted = components[i];
-                    components[i].deleteComponent();
-                    components.splice(i, 1);
-                    break;
+                    deletionIndex = i;
+                   break;
                 }
             }
     
-            for(let i=0;i<connectionLines.length;i++)
+            for(let i=connectionLines.length-1; i>=0; i--)
             {
                 //console.log(connectionLines[i]);
                 if(connectionLines[i].inputComponent == componentDeleted || connectionLines[i].outputComponent == componentDeleted)
@@ -846,15 +985,15 @@ window.addEventListener('keydown', function(event) {
                     }
     
                     connectionLines.splice(i, 1);
-                    if(i>0)
-                    {
-                        i--;
-                    }
+                    
     
                    
     
                 }
             }
+
+            componentDeleted.deleteComponent();
+            components.splice(deletionIndex, 1);
         }
 
        
@@ -883,7 +1022,6 @@ contextMenu.addEventListener("contextmenu", (e) => {
     e.preventDefault();
 });
 canvas.addEventListener("contextmenu", (e) => {
-    console.log("try!");
     e.preventDefault();
 
 });
@@ -930,6 +1068,36 @@ const filePickerOptions = {
       return result;
   }
   
+  function resetVariablesToInit()
+  {
+    components = [];
+    selectedComponent = null;
+    selectedComponentOffset = {x: 0, y: 0};
+    outputID = -1;
+    currentMouseMode = "none";
+    mousePosition = {x:0, y:0};
+    connectionLines = [];
+    currentLinePositions = [];
+    cameraPosition = {x: 0, y: 0};
+    zoom = 1;
+    targetZoom = 1;
+    boxSelectStart = null;
+    boxSelectComponentsOffset = [];
+    componentsInBoxSelect = [];
+    contextMenuVisible = false;
+
+    copiedComponents = [];
+    copiedComponentsOffsets = [];
+
+    keysPressed = {
+        "ArrowLeft": false,
+        "ArrowRight": false,
+        "ArrowUp": false,
+        "ArrowDown": false,
+        "Shift": false,
+    }
+
+}
   async function saveCircuit() {
       const newHandle = await window.showSaveFilePicker(filePickerOptions);
       const writableStream = await newHandle.createWritable();
@@ -938,12 +1106,7 @@ const filePickerOptions = {
     }
   
   async function loadCircuit() {
-      components = [];
-      connectionLines = []
-      selectedComponent = [];
-      currentLinePositions = [];
-      currentMouseMode = "none";
-  
+      resetVariablesToInit();
   
       const [fileHandle] = await window.showOpenFilePicker(filePickerOptions);
       const file = await fileHandle.getFile();
@@ -1160,6 +1323,29 @@ function copySelected()
             y: middlePosition.y - copiedComponents[i].position.y});
     }
 
+    for(let i=0;i<connectionLines.length;i++)
+    {
+        if(componentsInBoxSelect.includes(connectionLines[i].inputComponent) &&
+            componentsInBoxSelect.includes(connectionLines[i].outputComponent))
+        {
+
+            let thisCopiedLinePositions = [];
+            for(let j=0;j<connectionLines[i].linePositions.length;j++)
+            {
+                thisCopiedLinePositions.push({x: connectionLines[i].linePositions[j].x,
+                    y: connectionLines[i].linePositions[j].y});
+            }
+
+            copiedConnectionLines.push({linePositions: thisCopiedLinePositions, 
+                outputComponentID: componentsInBoxSelect.indexOf(connectionLines[i].outputComponent),
+                inputComponentID: componentsInBoxSelect.indexOf(connectionLines[i].inputComponent),
+                outputID: connectionLines[i].outputID,
+                inputID: connectionLines[i].inputID});
+
+            console.log(copiedConnectionLines);
+        }
+    }
+
     contextMenuVisible = false;
     contextMenu.classList.add("hidden");
 
@@ -1181,14 +1367,51 @@ function pasteComponents()
         // selectedComponent.position = {x: mousePosition.x - selectedComponentOffset.x + cameraPosition.x*zoom,
         //     y: mousePosition.y - selectedComponentOffset.y + cameraPosition.y*zoom};
             
-        anotherCopy.position = {x: cameraPosition.x*zoom - copiedComponentsOffsets[i].x,
-         y: cameraPosition.y*zoom - copiedComponentsOffsets[i].y};
-
-        console.log(anotherCopy.position);
+       
+        //console.log(anotherCopy.position);
         components.push(anotherCopy);
 
         componentsInBoxSelect.push(anotherCopy);
         boxSelectComponentsOffset.push(copiedComponentsOffsets[i]);
+    }
+
+    console.log(componentsInBoxSelect);
+
+    for(let i=0;i<copiedConnectionLines.length;i++)
+    {
+
+        let inputComponent = componentsInBoxSelect[copiedConnectionLines[i].inputComponentID];
+        let outputComponent = componentsInBoxSelect[copiedConnectionLines[i].outputComponentID];
+
+        console.log(copiedConnectionLines[i]);
+        console.log(inputComponent);
+
+        inputComponent.inputComponents[copiedConnectionLines[i].inputID] = {component: outputComponent,
+            outputID: copiedConnectionLines[i].outputID};
+
+        outputComponent.outputComponents[copiedConnectionLines[i].outputID].push({component: inputComponent,
+            inputID: copiedConnectionLines[i].inputID});
+
+       
+
+        let thisLinePositions = copiedConnectionLines[i].linePositions;
+
+        connectionLines.push({linePositions: thisLinePositions,
+            inputComponent: inputComponent,
+            outputComponent: outputComponent,
+            inputID: copiedConnectionLines[i].inputID,
+            outputID: copiedConnectionLines[i].outputID});
+        
+
+        console.log(connectionLines[connectionLines.length-1]);
+
+    }
+
+    for(let i= 0;i<componentsInBoxSelect.length;i++)
+    {
+        componentsInBoxSelect.position = {x: cameraPosition.x*zoom - copiedComponentsOffsets[i].x,
+            y: cameraPosition.y*zoom - copiedComponentsOffsets[i].y};
+   
     }
 
     currentMouseMode = "moveComponent";
