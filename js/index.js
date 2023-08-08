@@ -1352,8 +1352,8 @@ function copySelected()
             let thisCopiedLinePositions = [];
             for(let j=0;j<connectionLines[i].linePositions.length;j++)
             {
-                thisCopiedLinePositions.push({x: connectionLines[i].linePositions[j].x,
-                    y: connectionLines[i].linePositions[j].y});
+                thisCopiedLinePositions.push({x: middlePosition.x - connectionLines[i].linePositions[j].x,
+                    y: middlePosition.y - connectionLines[i].linePositions[j].y});
             }
 
             copiedConnectionLines.push({linePositions: thisCopiedLinePositions, 
@@ -1406,7 +1406,7 @@ function pasteComponents()
     }
 
     //console.log(componentsInBoxSelect);
-    console.log(copiedConnectionLines);
+    //console.log(copiedConnectionLines);
     for(let i=0;i<copiedConnectionLines.length;i++)
     {
 
@@ -1424,9 +1424,20 @@ function pasteComponents()
 
        
 
-        let thisLinePositions = copiedConnectionLines[i].linePositions;
+    
 
-        connectionLines.push({linePositions: thisLinePositions,
+        let thisLinePositions = [];
+
+        for(let j=0;j<copiedConnectionLines[i].linePositions.length;j++)
+        {
+            thisLinePositions.push({
+                x: cameraPosition.x*zoom - copiedConnectionLines[i].linePositions[j].x,
+                y: cameraPosition.y*zoom - copiedConnectionLines[i].linePositions[j].y
+            });
+        }
+
+        
+        connectionLinesInBoxSelect.push({linePositions: thisLinePositions,
             inputComponent: inputComponent,
             outputComponent: outputComponent,
             inputID: copiedConnectionLines[i].inputID,
@@ -1437,12 +1448,17 @@ function pasteComponents()
 
     }
 
+    initialConnectionLinesInBoxSelect = connectionLinesInBoxSelect;
+
     for(let i= 0;i<componentsInBoxSelect.length;i++)
     {
         componentsInBoxSelect.position = {x: cameraPosition.x*zoom - copiedComponentsOffsets[i].x,
             y: cameraPosition.y*zoom - copiedComponentsOffsets[i].y};
    
     }
+
+    console.log("lines in box: ");
+    console.log(connectionLinesInBoxSelect);
 
     currentMouseMode = "moveComponent";
     contextMenuVisible = false;
