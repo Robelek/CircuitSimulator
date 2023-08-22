@@ -155,8 +155,11 @@ main > .buttonHolder
 
 .contextMenu.hidden
 {
+
     display:none;
 }
+
+
 
 .contextMenu > .contextMenuOption
 {

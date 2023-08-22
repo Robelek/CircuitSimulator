@@ -32,6 +32,33 @@ class Component
         return this.name;
     }
 
+    highlightConnectionPoint(context, cameraPosition, zoom, isInput, index)
+    {
+        let realX = (this.position.x - cameraPosition.x) * zoom;
+        let realY = (this.position.y - cameraPosition.y) * zoom;
+        context.fillStyle = "rgba(255, 255, 0, 255)";
+
+        console.log(realX, realY);
+        if(isInput)
+        {
+            context.beginPath();
+            context.arc(realX + 4*zoom, realY + (index*20 + 10)*zoom, 8*zoom, 0, 2 * Math.PI);
+            context.fill();
+
+        }
+        else
+        {
+         
+            context.beginPath();
+            context.arc(realX -4*zoom + this.size.x*zoom, realY + (index*20 + 10)*zoom, 8*zoom, 0, 2 * Math.PI);
+            context.fill();
+            
+        }
+      
+
+       
+    }
+
     draw(context, cameraPosition, zoom)
     {
         context.fillStyle = this.color;
@@ -83,12 +110,12 @@ class Component
 
     inWhichOutputIsPoint(point, cameraPosition, zoom)
     {
-        return this.inWhichCircleIsPoint(point, this.outputs, this.size.x, cameraPosition, zoom);
+        return this.inWhichCircleIsPoint(point, this.outputs, this.size.x-4, cameraPosition, zoom);
     }
 
     inWhichInputIsPoint(point, cameraPosition, zoom)
     {
-        return this.inWhichCircleIsPoint(point, this.inputs, 0, cameraPosition, zoom);
+        return this.inWhichCircleIsPoint(point, this.inputs, 4, cameraPosition, zoom);
     }
 
     inWhichCircleIsPoint(point, arrayOfPorts, offsetX, cameraPosition, zoom)
@@ -215,7 +242,7 @@ class Component
     {
         let componentCopy = new this.constructor();
         componentCopy.position = {x: this.position.x, y: this.position.y};
-        console.log(componentCopy);
+       // console.log(componentCopy);
         return componentCopy;
 
     }

@@ -73,6 +73,10 @@ let copiedComponents = [];
 let copiedComponentsOffsets = [];
 let copiedConnectionLines = [];
 
+let connectionPointMouseOver = null;
+//formatting will be:
+//{component: component, isInput: isInput, index: index}
+
 let keysPressed = {
     "ArrowLeft": false,
     "ArrowRight": false,
@@ -108,6 +112,7 @@ function drawConnectionLine(positionA, positionB) {
 
 function drawComponents()
 {
+    
     for(let i=0;i<components.length;i++)
     {
         let component = components[i];
@@ -265,6 +270,12 @@ function drawComponents()
         }
 
 
+    }
+
+    if(connectionPointMouseOver != null)
+    {
+        let thatComponent = connectionPointMouseOver.component;
+        thatComponent.highlightConnectionPoint(context, cameraPosition, zoom, connectionPointMouseOver.isInput, connectionPointMouseOver.index);
     }
 }
 
@@ -742,13 +753,19 @@ canvas.addEventListener('mousemove', function(e)
                         y: initialConnectionLinesInBoxSelect[i].linePositions[j].y
                     });
 
-                    //console.log(thisLinePositions[j]);
+             
 
-                    //console.log("after");
-                    thisLinePositions[j] = {x: thisLinePositions[j].x - cameraPosition.x + e.offsetX,
-                        y: thisLinePositions[j].y - cameraPosition.y + e.offsetY};
+                    //something also doesn't seem right here
+                    //
+                    // thisLinePositions[j] = {x: thisLinePositions[j].x - cameraPosition.x + e.offsetX,
+                    //     y: thisLinePositions[j].y - cameraPosition.y + e.offsetY};
 
-                    //console.log(thisLinePositions[j]);
+                    // thisLinePositions[j] = {x: thisLinePositions[j].x + cameraPosition.x + e.offsetX/zoom,
+                    //     y: thisLinePositions[j].y + cameraPosition.y +  e.offsetY/zoom};
+
+                    thisLinePositions[j] = {x: cameraPosition.x + e.offsetX/zoom - thisLinePositions[j].x ,
+                    y: cameraPosition.y +  e.offsetY/zoom -  thisLinePositions[j].y };
+            
                 }
 
                 connectionLinesInBoxSelect[i].linePositions = thisLinePositions;
@@ -757,6 +774,49 @@ canvas.addEventListener('mousemove', function(e)
             
         }
     }
+
+    if(connectionPointMouseOver!=null)
+    {
+        let thatComponent = connectionPointMouseOver.component;
+        if(connectionPointMouseOver.isInput)
+        {
+            if(thatComponent.inWhichInputIsPoint({x: e.offsetX, y: e.offsetY}, cameraPosition, zoom) == connectionPointMouseOver.index)
+            {
+                return;
+            }
+        }
+        else
+        {
+            if(thatComponent.inWhichOutputIsPoint({x: e.offsetX, y: e.offsetY}, cameraPosition, zoom) == connectionPointMouseOver.index)
+            {
+                return;
+            }
+        }
+
+        connectionPointMouseOver  = null;
+     
+    }
+
+    if(connectionPointMouseOver == null)
+    {
+        for(let i=0;i<components.length;i++)
+        {
+            let inWhichOutput = components[i].inWhichOutputIsPoint({x: e.offsetX, y: e.offsetY}, cameraPosition, zoom);
+            if(inWhichOutput != -1)
+            {
+                connectionPointMouseOver = {component: components[i], isInput: false, index: inWhichOutput};
+                return;
+            }
+    
+            let inWhichInput = components[i].inWhichInputIsPoint({x: e.offsetX, y: e.offsetY}, cameraPosition, zoom);
+            if(inWhichInput != -1)
+            {
+                connectionPointMouseOver = {component: components[i], isInput: true, index: inWhichInput};
+                return;
+            }
+        }
+    }
+
    
     
 });
@@ -844,10 +904,18 @@ window.addEventListener('mouseup', function(e)
                 let linePositions = [];
                 for(let j=0;j<connectionLines[i].linePositions.length;j++)
                 {
+                    //something doesn't seem right here, after I drew it on paper
+                    // linePositions.push(
+                    //     {
+                    //         x: connectionLines[i].linePositions[j].x - cameraPosition.x*zoom - mousePosition.x,
+                    //         y: connectionLines[i].linePositions[j].y - cameraPosition.y*zoom - mousePosition.y
+                    //     }
+                    // )
+
                     linePositions.push(
                         {
-                            x: connectionLines[i].linePositions[j].x - cameraPosition.x*zoom - mousePosition.x,
-                            y: connectionLines[i].linePositions[j].y - cameraPosition.y*zoom - mousePosition.y
+                            x: mousePosition.x/zoom + cameraPosition.x - connectionLines[i].linePositions[j].x,
+                            y: mousePosition.y/zoom + cameraPosition.y - connectionLines[i].linePositions[j].y,
                         }
                     )
 
@@ -958,6 +1026,8 @@ window.addEventListener('keydown', function(event) {
 
             }
 
+            
+
             for(let i=0;i<componentsDeleted.length;i++)
             {
                 let index = components.indexOf(componentsDeleted[i]);
@@ -967,6 +1037,9 @@ window.addEventListener('keydown', function(event) {
 
             componentsInBoxSelect = [];
             boxSelectComponentsOffset = [];
+            connectionLinesInBoxSelect = [];
+            initialConnectionLinesInBoxSelect = [];
+            currentMouseMode = "none";
         }
         else
         {
@@ -1318,7 +1391,11 @@ function saveAsCustomComponent()
 
 function copySelected()
 {
+    copiedComponents = [];
+    copiedComponentsOffsets = [];
+    copiedConnectionLines = [];
     
+
     for(let i=0;i<connectionLinesInBoxSelect.length;i++)
     {
         connectionLines.push(connectionLinesInBoxSelect[i]);
@@ -1416,6 +1493,10 @@ function pasteComponents()
         //console.log(copiedConnectionLines[i]);
         //console.log(inputComponent);
 
+        console.log("Input component and output component");
+        console.log(inputComponent);
+        console.log(outputComponent);
+
         inputComponent.inputComponents[copiedConnectionLines[i].inputID] = {component: outputComponent,
             outputID: copiedConnectionLines[i].outputID};
 
@@ -1431,8 +1512,8 @@ function pasteComponents()
         for(let j=0;j<copiedConnectionLines[i].linePositions.length;j++)
         {
             thisLinePositions.push({
-                x: cameraPosition.x*zoom - copiedConnectionLines[i].linePositions[j].x,
-                y: cameraPosition.y*zoom - copiedConnectionLines[i].linePositions[j].y
+                x: copiedConnectionLines[i].linePositions[j].x,
+                y: copiedConnectionLines[i].linePositions[j].y
             });
         }
 

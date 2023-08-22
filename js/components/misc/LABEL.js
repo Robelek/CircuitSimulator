@@ -27,6 +27,13 @@ class LABEL extends Component
         result+= " " + this.name;
         return result;
     }
+
+    copy()
+    {
+        let result = super.copy();
+        result.name = this.name;
+        return result;
+    }
 }
 
 export default LABEL;
