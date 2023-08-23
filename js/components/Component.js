@@ -145,7 +145,7 @@ class Component
     {
         if(point.x >= (this.position.x  - cameraPosition.x)*zoom && point.x <= (this.position.x - cameraPosition.x + this.size.x)*zoom)
         {
-            if(point.y >= (this.position.y - cameraPosition.y*zoom) && point.y <= (this.position.y + this.size.y - cameraPosition.y)*zoom)
+            if(point.y >= (this.position.y - cameraPosition.y)*zoom && point.y <= (this.position.y + this.size.y - cameraPosition.y)*zoom)
             {
                 return true;
             }

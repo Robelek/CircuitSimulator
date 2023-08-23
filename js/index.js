@@ -10,6 +10,7 @@ import CLOCK from "./components/basic/CLOCK.js";
 import ANDx3 from "./components/basic/ANDx3.js";
 import XOR from "./components/basic/XOR.js";
 import LABEL from "./components/misc/LABEL.js";
+import MUX16 from "./components/MUX/MUX16.js";
 
 
 let events = [];
@@ -26,7 +27,8 @@ let componentTemplates = [
     new BUFFER(),
     new CLOCK(events),
     new XOR(),
-    new LABEL()
+    new LABEL(),
+    new MUX16(),
 ];
 
 let components = [];
@@ -166,17 +168,22 @@ function drawComponents()
             previousPos = selectedComponent.getOutputPositionCenter(outputID, cameraPosition, zoom);
         }
 
+        if(previousPos == null)
+        {
+            console.log("[ERROR] PREVIOUS POS NULL");
+        }
+
         if(abs(connectionMousePos.x - previousPos.x) > abs(connectionMousePos.y - previousPos.y))
         {
-            connectionMousePos = {x: connectionMousePos.x, y: previousPos.y - cameraPosition.y*zoom};
+            connectionMousePos = {x: connectionMousePos.x, y: previousPos.y};
         }
         else
         {
-            connectionMousePos = {x: previousPos.x - cameraPosition.x*zoom, y: connectionMousePos.y};
+            connectionMousePos = {x: previousPos.x, y: connectionMousePos.y};
         }
         
     }
-
+    
     if(currentMouseMode == "connectOutput" && selectedComponent != null)
     {
 
@@ -464,6 +471,7 @@ canvas.addEventListener('mousedown', function(e)
     if(contextMenuVisible)
     {
         contextMenu.classList.toggle("hidden");
+        contextMenu.style.left = "-200vw";
         contextMenuVisible = false;
     }
 
@@ -478,7 +486,7 @@ canvas.addEventListener('mousedown', function(e)
        {
               if(components[i].isPointInComponent(point, cameraPosition, zoom))
               {
-                //console.log(components[i]);
+                console.log(components[i]);
               }
        }
 
@@ -579,6 +587,8 @@ canvas.addEventListener('mousedown', function(e)
             return;
         }
 
+      
+        
         if(components[i].isPointInComponent(point, cameraPosition, zoom))
         {
             if(currentMouseMode == "none" && selectedComponent == null)
@@ -597,17 +607,17 @@ canvas.addEventListener('mousedown', function(e)
                 currentMouseMode = "none";
                 return;
             }
-            
+
             if(currentMouseMode == "connectOutput" && selectedComponent != null)
             {
                 let inWhichInput = components[i].inWhichInputIsPoint(point, cameraPosition, zoom);
-              
+                
                 if(inWhichInput != -1)
                 {
                     //console.log("Hey!");
                     components[i].connectToInput(selectedComponent, outputID, inWhichInput, events);
-
-
+    
+    
                     selectedComponent.outputComponents[outputID].push({component:components[i], inputID: inWhichInput});
                     
     
@@ -635,8 +645,10 @@ canvas.addEventListener('mousedown', function(e)
                     return;
             
                 }
-               
+                
             }
+            
+            
             
         }
 
@@ -652,7 +664,7 @@ canvas.addEventListener('mousedown', function(e)
         if(keysPressed["Shift"])
         {
             let previousPos = null;
-
+            connectionMousePos = {x: e.offsetX, y: e.offsetY};
             //console.log(currentLinePositions);
             if(currentLinePositions.length>0)
             {
@@ -664,16 +676,15 @@ canvas.addEventListener('mousedown', function(e)
             }
 
 
-           
-
-            if(abs(mousePosition.x - previousPos.x) > abs(mousePosition.y - previousPos.y))
-            {
-                connectionMousePos = {x: mousePosition.x, y: previousPos.y - cameraPosition.y * zoom};
-            }
-            else
-            {
-                connectionMousePos = {x: previousPos.x - cameraPosition.x * zoom, y: mousePosition.y};
-            }
+           ///
+           if(abs(connectionMousePos.x - previousPos.x) > abs(connectionMousePos.y - previousPos.y))
+           {
+               connectionMousePos = {x: connectionMousePos.x, y: previousPos.y/zoom - cameraPosition.y};
+           }
+           else
+           {
+               connectionMousePos = {x: previousPos.x/zoom - cameraPosition.x, y: connectionMousePos.y};
+           }
         }
        
         //console.log(connectionMousePos);
