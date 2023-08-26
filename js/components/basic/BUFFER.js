@@ -4,7 +4,7 @@ class BUFFER extends Component
 {
     constructor()
     {
-        super("BUFFER", [0], [1]);
+        super("BUFFER", [0], [0]);
     }
 
     updateOutputs()

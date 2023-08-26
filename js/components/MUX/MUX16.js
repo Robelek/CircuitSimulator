@@ -5,8 +5,9 @@ class MUX16 extends Component
 {
     constructor()
     {
-        super("MUX16", [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], [0], 100, "rgba(64, 78, 128, 255)");
-        this.size.y = 340;
+        super("MUX16", [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], [0], 140, "rgba(64, 78, 128, 255)");
+        this.size.y = 360;
+
     }
 
     isInputAddress(index)
@@ -111,6 +112,11 @@ class MUX16 extends Component
         for(let i=0;i<4;i++)
         {
             context.fillText("A" + (3-i), realX + (i*20 + this.size.x/4 -5)*zoom, realY + (this.size.y + -20)*zoom);
+        }
+
+        for(let i=0;i<16;i++)
+        {
+            context.fillText(i, realX + (12)*zoom, realY + (i*20 + 15)*zoom);
         }
 
         

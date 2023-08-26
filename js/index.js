@@ -294,27 +294,29 @@ function handleEvents()
     for(let i=0;i<previousEvents.length;i++)
     {
         //console.log(previousEvents[i].type);
-        if(previousEvents[i].type == "connected")
-        {
-            let component = previousEvents[i].component;
+        // if(previousEvents[i].type == "connected")
+        // {
+        //     let component = previousEvents[i].component;
 
-            for(let j=0;j<component.inputs.length;j++)
-            {
-                if(component.inputComponents[j] === null)
-                {
-                    continue;
-                }
+        //     for(let j=0;j<component.inputs.length;j++)
+        //     {
+        //         if(component.inputComponents[j] === null)
+        //         {
+        //             continue;
+        //         }
                 
-                let outputID = component.inputComponents[j].outputID;
-                let value =  component.inputComponents[j].component.outputs[outputID];
+        //         let outputID = component.inputComponents[j].outputID;
+        //         let value =  component.inputComponents[j].component.outputs[outputID];
 
-                component.inputs[j] = value;
-            }
+        //         component.inputs[j] = value;
+        //     }
 
-            component.updateOutputs();
-            events.push({type: "valueChanged", component: component});
-        }
-        else if(previousEvents[i].type == "valueChanged")
+        //     component.updateOutputs();
+        //     events.push({type: "valueChanged", component: component});
+        // }
+
+        // else if(previousEvents[i].type == "valueChanged")
+        if(previousEvents[i].type == "connected" || (previousEvents[i].type == "valueChanged"))
         {
 
             let component = previousEvents[i].component;
@@ -1182,9 +1184,6 @@ const filePickerOptions = {
     boxSelectComponentsOffset = [];
     componentsInBoxSelect = [];
     contextMenuVisible = false;
-
-    copiedComponents = [];
-    copiedComponentsOffsets = [];
 
     keysPressed = {
         "ArrowLeft": false,
