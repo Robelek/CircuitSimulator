@@ -11,6 +11,8 @@ import ANDx3 from "./components/basic/ANDx3.js";
 import XOR from "./components/basic/XOR.js";
 import LABEL from "./components/misc/LABEL.js";
 import MUX16 from "./components/MUX/MUX16.js";
+import DEMUX4TO16 from "./components/MUX/DEMUX4TO16.js";
+import PIPO8BITREGISTER from "./components/registers/PIPO8BITREGISTER.js";
 
 
 let events = [];
@@ -29,6 +31,8 @@ let componentTemplates = [
     new XOR(),
     new LABEL(),
     new MUX16(),
+    new DEMUX4TO16(),
+    new PIPO8BITREGISTER(),
 ];
 
 let components = [];
@@ -318,6 +322,7 @@ function handleEvents()
         // else if(previousEvents[i].type == "valueChanged")
         if(previousEvents[i].type == "connected" || (previousEvents[i].type == "valueChanged"))
         {
+           
 
             let component = previousEvents[i].component;
 
@@ -338,7 +343,22 @@ function handleEvents()
     
                     component.outputComponents[j][k].component.inputs[inputID] = value;
     
-                    events.push({type: "valueChanged", component: component.outputComponents[j][k].component});
+                 
+                    let previouslyChanged = [];
+                    
+                    if(previousEvents[i].previouslyChanged !== undefined)
+                    {
+                        previouslyChanged = previousEvents[i].previouslyChanged;
+                       
+                    }
+
+                    if(!previouslyChanged.includes(component.outputComponents[j][k].component))
+                    {
+                        previouslyChanged.push(component);
+                        events.push({type: "valueChanged", component: component.outputComponents[j][k].component, previouslyChanged: previouslyChanged});
+                    }
+                   
+                
                 }
                 
                
