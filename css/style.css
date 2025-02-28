@@ -103,6 +103,12 @@ body
     height: 4rem;
     cursor:grab;
 }
+.componentList > .component 
+{
+    text-wrap: wrap;
+    white-space: pre-line;
+    overflow: hidden;
+}
 
 .button
 {
@@ -191,4 +197,29 @@ main > .buttonHolder
 {
     width: 2rem;
     height: 2rem;
+}
+
+.textAreaInput
+{
+    left:0;
+    top:0;
+    margin:0;
+    position:fixed;
+    width:100%;
+    height:100%;
+    background-color: rgba(0, 0, 0, 0.397);
+    z-index: 5;
+
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    
+}
+.textAreaInput.hidden
+{
+    display:none;
+}
+.textAreaInput > textarea
+{
+    color: black;
 }

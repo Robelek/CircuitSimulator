@@ -1,16 +1,50 @@
 import Component from "../Component.js";
 
 //last four inputs are for addresses
-class PIPO8BITREGISTER extends Component
+class ROM256X16 extends Component
 {
-    constructor()
+    constructor(setRegisterContents)
     {
-        //input 8 is write enabled
-        //input 9 is clock
-        //input 10 is read enabled
-        super("PIPO8BITREGISTER", [0,0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0], 140, "rgba(64, 78, 128, 255)");
-        this.states = [0,0,0,0,0,0,0,0];
+        //input 8 is clock
+        //input 9 is read
+        super("ROM256X16", [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 140, "rgba(64, 78, 128, 255)");
+
+        this.registers = new Array(256);
+
+        for(let i=0;i<256;i++)
+        {
+            this.registers[i] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        }
+
+
         this.clockWasZero = true;
+
+        this.setRegisterContents = setRegisterContents;
+    }
+
+    handleRightClick()
+    {
+        let result = this.setRegisterContents().split('\n');
+
+        const regex = new RegExp('^[0-1]{16}');
+
+        for(let i=0;i<256;i++)
+        {
+            this.registers[i] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        }
+
+        for(let i=0;i<result.length && i<256;i++)
+        {
+            if(result[i].test(regex))
+            {
+                this.registers[i] = result[i].split('').map(Number);
+            }
+            else
+            {
+                console.log("ROM INVALID INPUT");
+                return;
+            }
+        }
 
     }
 
@@ -23,40 +57,48 @@ class PIPO8BITREGISTER extends Component
         return false;
     }
 
+    getCurrentAddress()
+    {
+        let address = 0;
+        let multiplier = 1;
+        for(let i=0;i<8;i++)
+        {
+           address+= this.inputs[i]*multiplier;
+           multiplier*=2;
+        }
+
+        console.log(address)
+        return address;
+    }
+
     updateOutputs()
     {
         //rising edge of clock
-        if(this.inputs[9] == 1 && this.clockWasZero)
+        if(this.inputs[8] == 1 && this.clockWasZero)
         {
-            //if write enabled we update the states
-            if(this.inputs[8] == 1)
-            {
-                for(let i=0;i<8;i++)
-                {
-                    this.states[i] = this.inputs[i];
-                }
-            }
 
-            //if read enabled we output the states
-            if(this.inputs[10]==1)
+            let address = this.getCurrentAddress();
+
+            //if read enabled we output that register
+            if(this.inputs[9]==1)
             {
-                for(let i=0;i<8;i++)
+                for(let i=0;i<16;i++)
                 {
-                    this.outputs[i] = this.states[i];
+                   this.outputs[i] =  this.registers[address][i] + 0;
                 }
             }
             else
             {
-                for(let i=0;i<8;i++)
+                for(let i=0;i<16;i++)
                 {
-                    this.outputs[i] = 0;
+                   this.outputs[i] =  0;
                 }
             }
 
 
         }
 
-        if(this.inputs[9]==0)
+        if(this.inputs[8]==0)
         {
             this.clockWasZero = true;
         }
@@ -121,7 +163,7 @@ class PIPO8BITREGISTER extends Component
         }
 
         //address inputs drawing
-        for(let i=0;i<3;i++)
+        for(let i=0;i<2;i++)
         {
             context.beginPath();
             context.arc(realX + (i*20 + this.size.x/4)*zoom, realY + (this.size.y)*zoom, 8*zoom, 0, 2 * Math.PI);
@@ -140,24 +182,23 @@ class PIPO8BITREGISTER extends Component
 
         let fontSize = Math.floor(12*zoom);
         context.font = `${fontSize}px serif`;
-        context.fillText("PIPO 8BIT", realX + (this.size.x/2)*zoom - (3 * ("PIPO 8BIT".length))*zoom, 
+        context.fillText("ROM256X16", realX + (this.size.x/2)*zoom - (3 * ("RAM256B".length))*zoom, 
         realY +  this.size.y/2*zoom);
 
         for(let i=0;i<8;i++)
         {
-            context.fillText("I"+i, realX + (12)*zoom, realY + (i*20 + 15)*zoom);
+            context.fillText("A"+i, realX + (12)*zoom, realY + (i*20 + 15)*zoom);
         }
 
-        for(let i=0;i<8;i++)
+        for(let i=0;i<16;i++)
         {
             context.fillText("O"+i, realX + (this.size.x - 24)*zoom, realY + (i*20 + 15)*zoom);
         }
 
         fontSize = Math.floor(10*zoom);
         context.font = `${fontSize}px serif`;
-        context.fillText("WR", realX + (0*20 + this.size.x/4 -("WR".length/2)*5)*zoom, realY + (this.size.y + -20)*zoom);
-        context.fillText("CLK", realX + (1*20 + this.size.x/4 - ("CLK".length/2)*5)*zoom, realY + (this.size.y + -20)*zoom);
-        context.fillText("RE", realX + (2*20 + this.size.x/4 - ("RE".length/2)*5)*zoom, realY + (this.size.y + -20)*zoom);
+        context.fillText("CLK", realX + (0*20 + this.size.x/4 -("WR".length/2)*5)*zoom, realY + (this.size.y + -20)*zoom);
+        context.fillText("RE", realX + (1*20 + this.size.x/4 - ("CLK".length/2)*5)*zoom, realY + (this.size.y + -20)*zoom);
 
        
         
@@ -182,12 +223,12 @@ class PIPO8BITREGISTER extends Component
     inWhichInputIsPoint(point, cameraPosition, zoom)
     {
         let whichCircle = this.inWhichCircleIsPoint(point, this.inputs, 4, cameraPosition, zoom);
-        if(whichCircle != -1 && whichCircle <8)
+        if(whichCircle != -1 && whichCircle < 8)
         {
             return whichCircle;
         }
      
-        for(let i=0;i<3;i++)
+        for(let i=0;i<2;i++)
         {
             let firstExpression = point.x - (this.position.x - cameraPosition.x +  i*20 + this.size.x/4)*zoom;
             firstExpression *= firstExpression;
@@ -228,4 +269,4 @@ class PIPO8BITREGISTER extends Component
     }
 }
 
-export default PIPO8BITREGISTER;
+export default ROM256X16;

@@ -5,10 +5,16 @@
         <script src="js/index.js" type="module" defer> </script>
     </head>
     <body>
+
         <div class="contextMenu hidden">
-            <div class="contextMenuOption" onclick="copySelected()">
+            <div class="contextMenuOption" onclick="copySelected(false)">
                 <img src="images/copy.svg"/> copy
             </div>
+
+            <div class="contextMenuOption" onclick="copySelected(true)">
+                <img src="images/copy.svg"/> copy (with input connections)
+            </div>
+
 
             <div class="contextMenuOption" onclick="pasteComponents()">
                 <img src="images/paste.svg"/>  paste
@@ -22,7 +28,16 @@
             <div class="contextMenuOption" onclick="editText()">
                 <img src="images/edit.svg"/> edit text
             </div>
+
+    
         </div>
+
+        <form class="textAreaInput hidden">
+            <textarea id="textArea" rows="30" cols="40">
+
+            </textarea>
+            <button type="submit"></button>
+        </form>
 
         <div id="header">
             <h1>Circuit Simulator</h1>

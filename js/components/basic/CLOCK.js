@@ -2,12 +2,17 @@ import Component from "../Component.js";
 
 class CLOCK extends Component
 {
-    constructor()
+    constructor(addEvent)
     {
         super("CLOCK", [], [0], 50, "rgba(0, 100, 200, 255)");
         this.enabled = false;
 
-        this.addEvent = null;
+        if(addEvent !== null)
+        {
+            this.addEvent = addEvent;
+        }
+
+    
         this.intervalID = -1;
 
         this.frequency = 1000;
@@ -23,7 +28,8 @@ class CLOCK extends Component
                 this.outputs[0] = !this.outputs[0] + 0;
                 if(this.addEvent!=null)
                 {
-                    this.addEvent();
+                    console.log("working");
+                    this.addEvent(this);
                 }
                
             }, this.frequency);

@@ -2,6 +2,8 @@ class Component
 {
     constructor(name, inputs, outputs, width = 60, color = "rgba(255, 0, 0, 255)")
     {
+        this.id = Symbol();
+        
         this.name = name;
 
         this.inputs = inputs;

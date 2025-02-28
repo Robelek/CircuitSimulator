@@ -13,9 +13,22 @@ import LABEL from "./components/misc/LABEL.js";
 import MUX16 from "./components/MUX/MUX16.js";
 import DEMUX4TO16 from "./components/MUX/DEMUX4TO16.js";
 import PIPO8BITREGISTER from "./components/registers/PIPO8BITREGISTER.js";
-
+import RAM256B from "./components/registers/RAM256B.js";
+import ROM256X16 from "./components/registers/ROM256X16.js";
 
 let events = [];
+
+function addEvent(component)
+{
+    events.push({type: "valueChanged", component: component});
+}
+
+function getTextAreaResults()
+{
+    let textAreaInput = document.getElementsByClassName("textAreaInput")[0];
+    textAreaInput.classList.toggle("hidden");
+
+}
 
 let componentTemplates = [
     new INPUT(),
@@ -27,12 +40,14 @@ let componentTemplates = [
     new NOR(),
     new NAND(),
     new BUFFER(),
-    new CLOCK(events),
+    new CLOCK(addEvent),
     new XOR(),
     new LABEL(),
     new MUX16(),
     new DEMUX4TO16(),
     new PIPO8BITREGISTER(),
+    new RAM256B(),
+    new ROM256X16(getTextAreaResults)
 ];
 
 let components = [];
@@ -78,6 +93,7 @@ const contextMenu = document.getElementsByClassName("contextMenu")[0];
 let copiedComponents = [];
 let copiedComponentsOffsets = [];
 let copiedConnectionLines = [];
+let copiedConnectionInputs = [];
 
 let connectionPointMouseOver = null;
 //formatting will be:
@@ -330,7 +346,7 @@ function handleEvents()
 
             for(let j=0;j<component.outputs.length;j++)
             {
-                if(component.outputComponents[j] === null || component.outputComponents[j] === []) 
+                if(component.outputComponents[j] === null) 
                 {
                     continue;
                 }
@@ -979,10 +995,20 @@ window.addEventListener('mouseup', function(e)
             }
         }
        console.log(`${previousLength} after ${connectionLines.length}`);
-
+        console.log(componentsInBoxSelect)
         boxSelectStart = null;
-        currentMouseMode = "moveComponent";
+        
+        if(componentsInBoxSelect.length > 0)
+        {
+            currentMouseMode = "moveComponent";
+        }
+        else
+        {
+            currentMouseMode = "none";
+        }
+       
     }
+   
    
 });
 
@@ -1267,6 +1293,10 @@ const filePickerOptions = {
           {
             thisComponent.name = data[currentIndex];
           }
+          if(data[1] == "CLOCK")
+          {
+            thisComponent.addEvent = addEvent;
+          }
           components.push(thisComponent);
       
       }
@@ -1419,12 +1449,12 @@ function saveAsCustomComponent()
     
 }
 
-function copySelected()
+function copySelected(withInputConnections)
 {
     copiedComponents = [];
     copiedComponentsOffsets = [];
     copiedConnectionLines = [];
-    
+    copiedConnectionInputs = [];
 
     for(let i=0;i<connectionLinesInBoxSelect.length;i++)
     {
@@ -1473,6 +1503,35 @@ function copySelected()
         }
     }
 
+    if(withInputConnections)
+    {
+        console.log("getting input connections from outside box select");
+        for(let i=0;i<connectionLines.length;i++)
+        {
+            if(componentsInBoxSelect.includes(connectionLines[i].inputComponent) && !componentsInBoxSelect.includes(connectionLines[i].outputComponent))
+            {
+                let thisCopiedLinePositions = [];
+                for(let j=0;j<connectionLines[i].linePositions.length;j++)
+                {
+                    thisCopiedLinePositions.push({x: middlePosition.x - connectionLines[i].linePositions[j].x,
+                        y: middlePosition.y - connectionLines[i].linePositions[j].y});
+                }
+
+                copiedConnectionInputs.push(
+                    {
+                        linePositions:thisCopiedLinePositions,
+                        outputComponentID: components.indexOf(connectionLines[i].outputComponent),
+                        inputComponentID: componentsInBoxSelect.indexOf(connectionLines[i].inputComponent),
+                        outputID: connectionLines[i].outputID,
+                        inputID: connectionLines[i].inputID
+                    }
+                )
+            }
+        }
+        console.log(copiedConnectionInputs);
+    }
+
+
     console.log(copiedConnectionLines);
     contextMenuVisible = false;
     contextMenu.classList.add("hidden");
@@ -1488,6 +1547,8 @@ function copySelected()
 
     //console.log(copiedComponentsOffsets);
 }
+
+
 
 function pasteComponents()
 {
@@ -1566,6 +1627,40 @@ function pasteComponents()
         componentsInBoxSelect.position = {x: cameraPosition.x*zoom - copiedComponentsOffsets[i].x,
             y: cameraPosition.y*zoom - copiedComponentsOffsets[i].y};
    
+    }
+
+
+    if(copiedConnectionInputs.length > 0)
+    {
+        for(let i=0;i<copiedConnectionInputs.length;i++)
+        {
+            console.log()
+            let inputComponent = componentsInBoxSelect[copiedConnectionInputs[i].inputComponentID];
+            let outputComponent = components[copiedConnectionInputs[i].outputComponentID];
+
+            outputComponent.outputComponents[copiedConnectionInputs[i].outputID].push({component: inputComponent,
+                inputID: copiedConnectionInputs[i].inputID});
+
+            inputComponent.inputComponents[copiedConnectionInputs[i].inputID] = {component: outputComponent,
+                outputID: copiedConnectionInputs[i].outputID};
+
+            let thisLinePositions = [];
+
+            for(let j=0;j<copiedConnectionInputs[i].linePositions.length;j++)
+            {
+                thisLinePositions.push({
+                    x: copiedConnectionInputs[i].linePositions[j].x,
+                    y: copiedConnectionInputs[i].linePositions[j].y
+                });
+            }
+    
+            
+            connectionLinesInBoxSelect.push({linePositions: thisLinePositions,
+                inputComponent: inputComponent,
+                outputComponent: outputComponent,
+                inputID: copiedConnectionInputs[i].inputID,
+                outputID: copiedConnectionInputs[i].outputID});
+        }
     }
 
     console.log("lines in box: ");
